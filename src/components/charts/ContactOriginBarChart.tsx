@@ -29,6 +29,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts 
         {data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
+              layout="vertical" // Set layout to vertical for horizontal bars
               data={data}
               margin={{
                 top: 20,
@@ -38,8 +39,8 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts 
               }}
             >
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="name" tickLine={false} axisLine={false} className="text-sm" />
-              <YAxis tickLine={false} axisLine={false} className="text-sm" />
+              <XAxis type="number" tickLine={false} axisLine={false} className="text-sm" /> {/* X-axis for values */}
+              <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} className="text-sm" /> {/* Y-axis for categories */}
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
                 contentStyle={{
@@ -51,7 +52,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts 
                 itemStyle={{ color: 'hsl(var(--foreground))' }}
               />
               <Legend />
-              <Bar dataKey="value" name="Número de Contactos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" name="Número de Contactos" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} /> {/* Adjust radius for horizontal bars */}
             </BarChart>
           </ResponsiveContainer>
         ) : (
