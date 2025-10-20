@@ -34,10 +34,10 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
   // Calculate dynamic height for the chart based on number of bars
   // Each category (with two bars) needs about 35px height, plus some padding for top/bottom and legend
   const minCategoryHeight = 35; // Desired height for each category (group of bars)
-  const baseChartPadding = 100; // Adjusted from 120 to 100 for a tighter fit
+  const baseChartPadding = 100; // Space for title, legend, and chart margins
   const dynamicChartHeight = data.length > 0
-    ? Math.max(350, data.length * minCategoryHeight + baseChartPadding)
-    : 350; // Minimum height of 350px
+    ? Math.max(150, data.length * minCategoryHeight + baseChartPadding) // Reduzido o mínimo para 150px
+    : 150; // Altura mínima de 150px quando não há dados
 
   return (
     <Card className="col-span-full">
