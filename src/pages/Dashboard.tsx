@@ -28,7 +28,17 @@ const Dashboard = () => {
     const now = new Date();
 
     return contacts.filter((contact) => {
+      // Adiciona uma verificação para garantir que dataCriacao existe e é uma string
+      if (!contact.dataCriacao || typeof contact.dataCriacao !== 'string') {
+        return false; // Ignora contactos com dataCriacao inválida ou ausente
+      }
       const contactDate = parseISO(contact.dataCriacao); // Assuming dataCriacao is in ISO format
+
+      // Verifica se a data é válida após o parse
+      if (isNaN(contactDate.getTime())) {
+        console.warn(`Invalid date string for contact ${contact.id}: ${contact.dataCriacao}`);
+        return false;
+      }
 
       switch (selectedPeriod) {
         case "today":
