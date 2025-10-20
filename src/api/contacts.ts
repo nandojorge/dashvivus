@@ -8,7 +8,7 @@ export async function getContacts(): Promise<Contact[]> {
     throw new Error("Failed to fetch contacts");
   }
   const data = await response.json();
-  console.log("Dados brutos da API de contactos:", data); // Log para depuração
+  // console.log("Dados brutos da API de contactos:", data); // Log para depuração - REMOVIDO
   // Assuming the API returns an array directly
   return data;
 }

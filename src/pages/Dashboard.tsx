@@ -25,20 +25,18 @@ const Dashboard = () => {
   const filteredContactsCount = useMemo(() => {
     if (!contacts) return 0;
 
-    console.log("Contactos recebidos (antes da filtragem):", contacts); // Log para depuração
-
     const now = new Date();
 
     const count = contacts.filter((contact) => {
-      // Adiciona uma verificação para garantir que dataCriacao existe e é uma string
-      if (!contact.dataCriacao || typeof contact.dataCriacao !== 'string') {
-        return false; // Ignora contactos com dataCriacao inválida ou ausente
+      // Adiciona uma verificação para garantir que dataregisto existe e é uma string
+      if (!contact.dataregisto || typeof contact.dataregisto !== 'string') {
+        return false; // Ignora contactos com dataregisto inválido ou ausente
       }
-      const contactDate = parseISO(contact.dataCriacao); // Assuming dataCriacao is in ISO format
+      const contactDate = parseISO(contact.dataregisto); // Using dataregisto for filtering
 
       // Verifica se a data é válida após o parse
       if (isNaN(contactDate.getTime())) {
-        console.warn(`Invalid date string for contact ${contact.id}: ${contact.dataCriacao}`);
+        console.warn(`Invalid date string for contact ${contact.id}: ${contact.dataregisto}`);
         return false;
       }
 
@@ -56,7 +54,6 @@ const Dashboard = () => {
       }
     }).length;
 
-    console.log(`Contactos filtrados para o período '${selectedPeriod}':`, count); // Log para depuração
     return count;
   }, [contacts, selectedPeriod]);
 

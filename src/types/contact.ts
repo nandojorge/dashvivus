@@ -5,5 +5,5 @@ export interface Contact {
   telefone: string;
   endereco: string;
   status: string; // Ex: "Ativo", "Inativo", "Lead"
-  dataCriacao: string; // Data no formato string
+  dataregisto: string; // Data no formato string
 }
