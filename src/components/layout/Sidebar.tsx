@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: Home, label: "Dashboard", path: "/" },
@@ -19,7 +20,7 @@ const navItems = [
 export const Sidebar = () => {
   const isMobile = useIsMobile();
 
-  const renderNavLinks = () => (
+  const renderNavLinks = (forMobileSheet: boolean) => (
     <nav className="grid gap-1 p-2">
       {navItems.map((item) => (
         <Tooltip key={item.path}>
@@ -27,11 +28,23 @@ export const Sidebar = () => {
             <Button
               variant="ghost"
               asChild
-              className="w-full justify-start h-10"
+              size={forMobileSheet ? "default" : "icon"} // Usa 'icon' para desktop estreito, 'default' para mobile
+              className={cn(
+                forMobileSheet ? "w-full justify-start" : "", // Largura total e justificado à esquerda para mobile
+              )}
             >
-              <Link to={item.path} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+              <Link
+                to={item.path}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary",
+                  forMobileSheet ? "px-3 py-2" : "p-0", // Ajusta o preenchimento do link
+                  !forMobileSheet && "justify-center", // Centraliza o conteúdo para a barra lateral estreita do desktop
+                )}
+              >
                 <item.icon className="h-4 w-4" />
-                <span className="sr-only sm:not-sr-only">{item.label}</span>
+                {/* Mostra o rótulo apenas na folha móvel, esconde na barra lateral estreita do desktop */}
+                {forMobileSheet && <span>{item.label}</span>}
+                {!forMobileSheet && <span className="sr-only">{item.label}</span>}
               </Link>
             </Button>
           </TooltipTrigger>
@@ -59,7 +72,7 @@ export const Sidebar = () => {
               </Link>
             </div>
             <ScrollArea className="flex-1">
-              {renderNavLinks()}
+              {renderNavLinks(true)} {/* Renderiza para a folha móvel */}
             </ScrollArea>
           </div>
         </SheetContent>
@@ -78,7 +91,7 @@ export const Sidebar = () => {
           <span className="sr-only">FisioCRM</span>
         </Link>
         <Separator />
-        {renderNavLinks()}
+        {renderNavLinks(false)} {/* Renderiza para a barra lateral estreita do desktop */}
       </nav>
     </aside>
   );
