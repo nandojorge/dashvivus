@@ -56,6 +56,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
                 left: 80, // Increased left margin for Y-axis labels
                 bottom: 5,
               }}
+              barGap={2} // Reduz o espaçamento entre as barras do mesmo grupo
             >
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis type="number" tickLine={false} axisLine={false} className="text-sm" />
@@ -79,8 +80,8 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
                 itemStyle={{ color: 'hsl(var(--foreground))' }}
               />
               <Legend />
-              <Bar dataKey="currentValue" name="Contactos Atuais" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={12} />
-              <Bar dataKey="previousValue" name="Período Anterior" fill="hsl(var(--secondary-darker))" radius={[0, 4, 4, 0]} barSize={12} />
+              <Bar dataKey="currentValue" name="Contactos Atuais" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={16} /> {/* Aumenta a espessura da barra */}
+              <Bar dataKey="previousValue" name="Período Anterior" fill="hsl(var(--secondary-darker))" radius={[0, 4, 4, 0]} barSize={16} /> {/* Aumenta a espessura da barra */}
             </BarChart>
           </ResponsiveContainer>
         ) : (
