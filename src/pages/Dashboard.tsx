@@ -25,9 +25,11 @@ const Dashboard = () => {
   const filteredContactsCount = useMemo(() => {
     if (!contacts) return 0;
 
+    console.log("Contactos recebidos (antes da filtragem):", contacts); // Log para depuração
+
     const now = new Date();
 
-    return contacts.filter((contact) => {
+    const count = contacts.filter((contact) => {
       // Adiciona uma verificação para garantir que dataCriacao existe e é uma string
       if (!contact.dataCriacao || typeof contact.dataCriacao !== 'string') {
         return false; // Ignora contactos com dataCriacao inválida ou ausente
@@ -53,6 +55,9 @@ const Dashboard = () => {
           return false;
       }
     }).length;
+
+    console.log(`Contactos filtrados para o período '${selectedPeriod}':`, count); // Log para depuração
+    return count;
   }, [contacts, selectedPeriod]);
 
   const getPeriodLabel = (period: FilterPeriod) => {
