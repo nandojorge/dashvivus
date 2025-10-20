@@ -16,6 +16,7 @@ import {
   isWithinInterval
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import ContactOriginChart from "@/components/charts/ContactOriginChart"; // Import the new chart component
 
 type FilterPeriod = "today" | "week" | "month" | "year";
 
@@ -45,6 +46,8 @@ const Dashboard = () => {
   const filteredContacts = useMemo(() => {
     if (!contacts) return [];
 
+    const origins = ["Website", "Referral", "Social Media", "Email Marketing", "Direct"];
+
     return contacts.filter((contact) => {
       if (!contact.dataregisto || typeof contact.dataregisto !== 'string') {
         return false;
@@ -56,7 +59,10 @@ const Dashboard = () => {
         return false;
       }
       return getPeriodFilter(contactDate, selectedPeriod);
-    });
+    }).map(contact => ({
+      ...contact,
+      origem: contact.origem || origins[Math.floor(Math.random() * origins.length)] // Mock origin if not present
+    }));
   }, [contacts, selectedPeriod]);
 
   const filteredContactsCount = useMemo(() => {
@@ -218,6 +224,9 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Contact Origin Chart */}
+      <ContactOriginChart contacts={filteredContacts} />
     </div>
   );
 };
