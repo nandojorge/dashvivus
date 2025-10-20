@@ -22,10 +22,25 @@ const Dashboard = () => {
     queryFn: getContacts,
   });
 
-  const filteredContactsCount = useMemo(() => {
-    if (!contacts) return 0;
+  const getPeriodFilter = (contactDate: Date, period: FilterPeriod) => {
+    switch (period) {
+      case "today":
+        return isToday(contactDate);
+      case "week":
+        return isThisWeek(contactDate, { weekStartsOn: 0, locale: ptBR }); // Domingo como início da semana
+      case "month":
+        return isThisMonth(contactDate);
+      case "year":
+        return isThisYear(contactDate);
+      default:
+        return false;
+    }
+  };
 
-    const count = contacts.filter((contact) => {
+  const filteredContacts = useMemo(() => {
+    if (!contacts) return [];
+
+    return contacts.filter((contact) => {
       if (!contact.dataregisto || typeof contact.dataregisto !== 'string') {
         return false;
       }
@@ -35,28 +50,17 @@ const Dashboard = () => {
         console.warn(`Invalid date string for contact ${contact.id}: ${contact.dataregisto}`);
         return false;
       }
-
-      switch (selectedPeriod) {
-        case "today":
-          return isToday(contactDate);
-        case "week":
-          return isThisWeek(contactDate, { weekStartsOn: 0, locale: ptBR }); // Domingo como início da semana
-        case "month":
-          return isThisMonth(contactDate);
-        case "year":
-          return isThisYear(contactDate);
-        default:
-          return false;
-      }
-    }).length;
-
-    return count;
+      return getPeriodFilter(contactDate, selectedPeriod);
+    });
   }, [contacts, selectedPeriod]);
 
+  const filteredContactsCount = useMemo(() => {
+    return filteredContacts.length;
+  }, [filteredContacts]);
+
   const activeContactsCount = useMemo(() => {
-    if (!contacts) return 0;
-    return contacts.filter(contact => contact.arquivado === "nao").length;
-  }, [contacts]);
+    return filteredContacts.filter(contact => contact.arquivado === "nao").length;
+  }, [filteredContacts]);
 
   const getPeriodLabel = (period: FilterPeriod) => {
     switch (period) {
@@ -145,7 +149,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{filteredContactsCount}</div>
             <p className="text-xs text-muted-foreground">
-              Total de contactos ativos: {activeContactsCount}
+              Total de contactos ativos no período: {activeContactsCount}
             </p>
           </CardContent>
         </Card>
