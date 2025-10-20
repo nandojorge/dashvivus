@@ -16,9 +16,37 @@ import {
   isWithinInterval
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart"; // Import the new bar chart component
+import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
 
 type FilterPeriod = "today" | "week" | "month" | "year";
+
+// Helper function to get previous period interval
+const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date) => {
+  let start: Date;
+  let end: Date;
+
+  switch (currentPeriod) {
+    case "today":
+      start = startOfDay(subDays(now, 1));
+      end = endOfDay(subDays(now, 1));
+      break;
+    case "week":
+      start = startOfWeek(subWeeks(now, 1), { weekStartsOn: 0, locale: ptBR });
+      end = endOfWeek(subWeeks(now, 1), { weekStartsOn: 0, locale: ptBR });
+      break;
+    case "month":
+      start = startOfMonth(subMonths(now, 1));
+      end = endOfMonth(subMonths(now, 1));
+      break;
+    case "year":
+      start = startOfYear(subYears(now, 1));
+      end = endOfYear(subYears(now, 1));
+      break;
+    default:
+      return { start: now, end: now }; // Should not happen
+  }
+  return { start, end };
+};
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
@@ -28,42 +56,47 @@ const Dashboard = () => {
     queryFn: getContacts,
   });
 
-  const getPeriodFilter = (contactDate: Date, period: FilterPeriod) => {
-    switch (period) {
-      case "today":
-        return isToday(contactDate);
-      case "week":
-        return isThisWeek(contactDate, { weekStartsOn: 0, locale: ptBR }); // Domingo como início da semana
-      case "month":
-        return isThisMonth(contactDate);
-      case "year":
-        return isThisYear(contactDate);
-      default:
-        return false;
-    }
-  };
+  const origins = ["Website", "Referral", "Social Media", "Email Marketing", "Direct"]; // Define origins once
 
-  const filteredContacts = useMemo(() => {
-    if (!contacts) return [];
-
-    const origins = ["Website", "Referral", "Social Media", "Email Marketing", "Direct"];
-
-    return contacts.filter((contact) => {
+  const processContactsForPeriod = (allContacts: Contact[] | undefined, periodFilterFn: (contactDate: Date) => boolean) => {
+    if (!allContacts) return [];
+    return allContacts.filter((contact) => {
       if (!contact.dataregisto || typeof contact.dataregisto !== 'string') {
         return false;
       }
       const contactDate = parseISO(contact.dataregisto);
-
       if (isNaN(contactDate.getTime())) {
         console.warn(`Invalid date string for contact ${contact.id}: ${contact.dataregisto}`);
         return false;
       }
-      return getPeriodFilter(contactDate, selectedPeriod);
+      return periodFilterFn(contactDate);
     }).map(contact => ({
       ...contact,
       origemcontacto: contact.origemcontacto || origins[Math.floor(Math.random() * origins.length)] // Mock origin if not present
     }));
+  };
+
+  const filteredContacts = useMemo(() => {
+    return processContactsForPeriod(contacts, (contactDate) => getPeriodFilter(contactDate, selectedPeriod));
   }, [contacts, selectedPeriod]);
+
+  // Calculate previous period contacts
+  const previousPeriodFilteredContacts = useMemo(() => {
+    if (!contacts) return [];
+    const now = new Date();
+    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
+    return processContactsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start, end }));
+  }, [contacts, selectedPeriod]);
+
+  // Calculate origin counts for previous period
+  const previousPeriodOriginCounts = useMemo(() => {
+    const counts: { [key: string]: number } = {};
+    previousPeriodFilteredContacts.forEach(contact => {
+      const origin = contact.origemcontacto || 'Desconhecida';
+      counts[origin] = (counts[origin] || 0) + 1;
+    });
+    return counts;
+  }, [previousPeriodFilteredContacts]);
 
   const filteredContactsCount = useMemo(() => {
     return filteredContacts.length;
@@ -75,32 +108,8 @@ const Dashboard = () => {
 
   const previousPeriodContactsCount = useMemo(() => {
     if (!contacts) return 0;
-
     const now = new Date();
-    let previousPeriodStart: Date;
-    let previousPeriodEnd: Date;
-
-    switch (selectedPeriod) {
-      case "today":
-        previousPeriodStart = startOfDay(subDays(now, 1));
-        previousPeriodEnd = endOfDay(subDays(now, 1));
-        break;
-      case "week":
-        previousPeriodStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 0, locale: ptBR });
-        previousPeriodEnd = endOfWeek(subWeeks(now, 1), { weekStartsOn: 0, locale: ptBR });
-        break;
-      case "month":
-        previousPeriodStart = startOfMonth(subMonths(now, 1));
-        previousPeriodEnd = endOfMonth(subMonths(now, 1));
-        break;
-      case "year":
-        previousPeriodStart = startOfYear(subYears(now, 1));
-        previousPeriodEnd = endOfYear(subYears(now, 1));
-        break;
-      default:
-        return 0;
-    }
-
+    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
     return contacts.filter((contact) => {
       if (!contact.dataregisto || typeof contact.dataregisto !== 'string') {
         return false;
@@ -110,7 +119,7 @@ const Dashboard = () => {
       if (isNaN(contactDate.getTime())) {
         return false;
       }
-      return isWithinInterval(contactDate, { start: previousPeriodStart, end: previousPeriodEnd });
+      return isWithinInterval(contactDate, { start: start, end: end });
     }).length;
   }, [contacts, selectedPeriod]);
 
@@ -226,7 +235,10 @@ const Dashboard = () => {
       </div>
 
       {/* Contact Origin Bar Chart */}
-      <ContactOriginBarChart contacts={filteredContacts} />
+      <ContactOriginBarChart
+        contacts={filteredContacts}
+        previousPeriodOriginCounts={previousPeriodOriginCounts}
+      />
     </div>
   );
 };
