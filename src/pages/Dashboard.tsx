@@ -25,16 +25,12 @@ const Dashboard = () => {
   const filteredContactsCount = useMemo(() => {
     if (!contacts) return 0;
 
-    const now = new Date();
-
     const count = contacts.filter((contact) => {
-      // Adiciona uma verificação para garantir que dataregisto existe e é uma string
       if (!contact.dataregisto || typeof contact.dataregisto !== 'string') {
-        return false; // Ignora contactos com dataregisto inválido ou ausente
+        return false;
       }
-      const contactDate = parseISO(contact.dataregisto); // Using dataregisto for filtering
+      const contactDate = parseISO(contact.dataregisto);
 
-      // Verifica se a data é válida após o parse
       if (isNaN(contactDate.getTime())) {
         console.warn(`Invalid date string for contact ${contact.id}: ${contact.dataregisto}`);
         return false;
@@ -44,7 +40,7 @@ const Dashboard = () => {
         case "today":
           return isToday(contactDate);
         case "week":
-          return isThisWeek(contactDate, { weekStartsOn: 1, locale: ptBR }); // Monday as start of week
+          return isThisWeek(contactDate, { weekStartsOn: 0, locale: ptBR }); // Domingo como início da semana
         case "month":
           return isThisMonth(contactDate);
         case "year":
@@ -56,6 +52,11 @@ const Dashboard = () => {
 
     return count;
   }, [contacts, selectedPeriod]);
+
+  const activeContactsCount = useMemo(() => {
+    if (!contacts) return 0;
+    return contacts.filter(contact => contact.arquivado === "nao").length;
+  }, [contacts]);
 
   const getPeriodLabel = (period: FilterPeriod) => {
     switch (period) {
@@ -144,7 +145,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{filteredContactsCount}</div>
             <p className="text-xs text-muted-foreground">
-              {selectedPeriod === "today" ? "Novos contactos hoje" : `Total de contactos ${getPeriodLabel(selectedPeriod).toLowerCase()}`}
+              Total de contactos ativos: {activeContactsCount}
             </p>
           </CardContent>
         </Card>
