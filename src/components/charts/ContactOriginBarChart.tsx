@@ -80,7 +80,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
               />
               <Legend />
               <Bar dataKey="currentValue" name="Contactos Atuais" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={12} />
-              <Bar dataKey="previousValue" name="Período Anterior" fill="hsl(var(--secondary))" radius={[0, 4, 4, 0]} barSize={12} />
+              <Bar dataKey="previousValue" name="Período Anterior" fill="hsl(var(--secondary-darker))" radius={[0, 4, 4, 0]} barSize={12} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
