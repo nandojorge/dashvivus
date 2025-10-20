@@ -48,6 +48,23 @@ const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date) => {
   return { start, end };
 };
 
+// Helper function to filter contacts by period
+const getPeriodFilter = (contactDate: Date, period: FilterPeriod) => {
+  const now = new Date();
+  switch (period) {
+    case "today":
+      return isToday(contactDate);
+    case "week":
+      return isThisWeek(contactDate, { weekStartsOn: 0, locale: ptBR });
+    case "month":
+      return isThisMonth(contactDate);
+    case "year":
+      return isThisYear(contactDate);
+    default:
+      return false;
+  }
+};
+
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
 
