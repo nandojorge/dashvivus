@@ -32,12 +32,12 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
   }, [contacts, previousPeriodOriginCounts]);
 
   // Calculate dynamic height for the chart based on number of bars
-  // Each category (with two bars) needs about 35px height, plus some padding for top/bottom and legend
-  const minCategoryHeight = 35; // Desired height for each category (group of bars)
+  // Each category (with two bars) needs about 45px height, plus some padding for top/bottom and legend
+  const minCategoryHeight = 45; // Increased from 35 to 45 for more spacing between categories
   const baseChartPadding = 100; // Space for title, legend, and chart margins
   const dynamicChartHeight = data.length > 0
-    ? Math.max(150, data.length * minCategoryHeight + baseChartPadding) // Reduzido o mínimo para 150px
-    : 150; // Altura mínima de 150px quando não há dados
+    ? Math.max(150, data.length * minCategoryHeight + baseChartPadding)
+    : 150; // Minimum height of 150px when no data
 
   return (
     <Card className="col-span-full">
@@ -80,8 +80,8 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
                 itemStyle={{ color: 'hsl(var(--foreground))' }}
               />
               <Legend />
-              <Bar dataKey="currentValue" name="Contactos Atuais" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={16} /> {/* Aumenta a espessura da barra */}
-              <Bar dataKey="previousValue" name="Período Anterior" fill="hsl(var(--secondary-darker))" radius={[0, 4, 4, 0]} barSize={16} /> {/* Aumenta a espessura da barra */}
+              <Bar dataKey="currentValue" name="Contactos Atuais" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={16} />
+              <Bar dataKey="previousValue" name="Período Anterior" fill="hsl(var(--secondary-darker))" radius={[0, 4, 4, 0]} barSize={16} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
