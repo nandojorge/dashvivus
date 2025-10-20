@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "react-router-dom";
-import { Home, Users, Calendar, Stethoscope, Menu } from "lucide-react";
+import { Home, Users, Calendar, Stethoscope, Menu, Contact } from "lucide-react"; // Added Contact icon
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: Home, label: "Dashboard", path: "/" },
+  { icon: Contact, label: "Contactos", path: "/contacts" }, // New Contacts item
   { icon: Users, label: "Pacientes", path: "/patients" },
   { icon: Calendar, label: "Agendamentos", path: "/appointments" },
   { icon: Stethoscope, label: "Fisioterapeutas", path: "/therapists" },
@@ -28,21 +29,20 @@ export const Sidebar = () => {
             <Button
               variant="ghost"
               asChild
-              size={forMobileSheet ? "default" : "icon"} // Usa 'icon' para desktop estreito, 'default' para mobile
+              size={forMobileSheet ? "default" : "icon"}
               className={cn(
-                forMobileSheet ? "w-full justify-start" : "", // Largura total e justificado à esquerda para mobile
+                forMobileSheet ? "w-full justify-start" : "",
               )}
             >
               <Link
                 to={item.path}
                 className={cn(
                   "flex items-center gap-3 rounded-lg text-muted-foreground transition-all hover:text-primary",
-                  forMobileSheet ? "px-3 py-2" : "p-0", // Ajusta o preenchimento do link
-                  !forMobileSheet && "justify-center", // Centraliza o conteúdo para a barra lateral estreita do desktop
+                  forMobileSheet ? "px-3 py-2" : "p-0",
+                  !forMobileSheet && "justify-center",
                 )}
               >
                 <item.icon className="h-4 w-4" />
-                {/* Mostra o rótulo apenas na folha móvel, esconde na barra lateral estreita do desktop */}
                 {forMobileSheet && <span>{item.label}</span>}
                 {!forMobileSheet && <span className="sr-only">{item.label}</span>}
               </Link>
@@ -72,7 +72,7 @@ export const Sidebar = () => {
               </Link>
             </div>
             <ScrollArea className="flex-1">
-              {renderNavLinks(true)} {/* Renderiza para a folha móvel */}
+              {renderNavLinks(true)}
             </ScrollArea>
           </div>
         </SheetContent>
@@ -91,7 +91,7 @@ export const Sidebar = () => {
           <span className="sr-only">FisioCRM</span>
         </Link>
         <Separator />
-        {renderNavLinks(false)} {/* Renderiza para a barra lateral estreita do desktop */}
+        {renderNavLinks(false)}
       </nav>
     </aside>
   );
