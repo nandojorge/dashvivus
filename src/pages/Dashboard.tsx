@@ -16,7 +16,7 @@ import {
   isWithinInterval
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import ContactOriginChart from "@/components/charts/ContactOriginChart"; // Import the new chart component
+import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart"; // Import the new bar chart component
 
 type FilterPeriod = "today" | "week" | "month" | "year";
 
@@ -61,7 +61,7 @@ const Dashboard = () => {
       return getPeriodFilter(contactDate, selectedPeriod);
     }).map(contact => ({
       ...contact,
-      origem: contact.origem || origins[Math.floor(Math.random() * origins.length)] // Mock origin if not present
+      origemcontacto: contact.origemcontacto || origins[Math.floor(Math.random() * origins.length)] // Mock origin if not present
     }));
   }, [contacts, selectedPeriod]);
 
@@ -225,8 +225,8 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Contact Origin Chart */}
-      <ContactOriginChart contacts={filteredContacts} />
+      {/* Contact Origin Bar Chart */}
+      <ContactOriginBarChart contacts={filteredContacts} />
     </div>
   );
 };

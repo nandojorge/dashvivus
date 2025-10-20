@@ -7,5 +7,5 @@ export interface Contact {
   status: string; // Ex: "Ativo", "Inativo", "Lead"
   dataregisto: string; // Data no formato string
   arquivado: string; // "sim" ou "nao"
-  origem?: string; // Novo campo para a origem do contacto
+  origemcontacto?: string; // Novo campo para a origem do contacto
 }
