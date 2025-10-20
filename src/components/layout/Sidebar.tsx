@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "react-router-dom";
-import { Home, Users, Calendar, Stethoscope, Menu, Contact } from "lucide-react"; // Added Contact icon
+import { Home, Stethoscope, Menu } from "lucide-react"; // Removed other icons
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -12,10 +12,6 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: Home, label: "Dashboard", path: "/" },
-  { icon: Contact, label: "Contactos", path: "/contacts" }, // New Contacts item
-  { icon: Users, label: "Pacientes", path: "/patients" },
-  { icon: Calendar, label: "Agendamentos", path: "/appointments" },
-  { icon: Stethoscope, label: "Fisioterapeutas", path: "/therapists" },
 ];
 
 export const Sidebar = () => {

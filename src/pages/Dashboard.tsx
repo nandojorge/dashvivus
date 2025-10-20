@@ -1,125 +1,139 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Users, CalendarCheck, Stethoscope } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getContacts } from "@/api/contacts";
+import { Contact } from "@/types/contact";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal, Users } from "lucide-react";
+import { isToday, isThisWeek, isThisMonth, isThisYear, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+type FilterPeriod = "today" | "week" | "month" | "year";
 
 const Dashboard = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
+
+  const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
+    queryKey: ["contacts"],
+    queryFn: getContacts,
+  });
+
+  const filteredContactsCount = useMemo(() => {
+    if (!contacts) return 0;
+
+    const now = new Date();
+
+    return contacts.filter((contact) => {
+      const contactDate = parseISO(contact.dataCriacao); // Assuming dataCriacao is in ISO format
+
+      switch (selectedPeriod) {
+        case "today":
+          return isToday(contactDate);
+        case "week":
+          return isThisWeek(contactDate, { weekStartsOn: 1, locale: ptBR }); // Monday as start of week
+        case "month":
+          return isThisMonth(contactDate);
+        case "year":
+          return isThisYear(contactDate);
+        default:
+          return false;
+      }
+    }).length;
+  }, [contacts, selectedPeriod]);
+
+  const getPeriodLabel = (period: FilterPeriod) => {
+    switch (period) {
+      case "today":
+        return "Hoje";
+      case "week":
+        return "Esta Semana";
+      case "month":
+        return "Este Mês";
+      case "year":
+        return "Este Ano";
+      default:
+        return "";
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-3xl font-bold">Dashboard do CRM</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Carregando Dados...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[100px] w-full rounded-md" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-3xl font-bold">Dashboard do CRM</h1>
+        <Alert variant="destructive">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>Erro</AlertTitle>
+          <AlertDescription>
+            Ocorreu um erro ao carregar os dados: {error?.message || "Erro desconhecido."}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-3xl font-bold">Dashboard do CRM</h1>
+      <div className="flex gap-2 mb-4">
+        <Button
+          variant={selectedPeriod === "today" ? "default" : "outline"}
+          onClick={() => setSelectedPeriod("today")}
+        >
+          Hoje
+        </Button>
+        <Button
+          variant={selectedPeriod === "week" ? "default" : "outline"}
+          onClick={() => setSelectedPeriod("week")}
+        >
+          Semana
+        </Button>
+        <Button
+          variant={selectedPeriod === "month" ? "default" : "outline"}
+          onClick={() => setSelectedPeriod("month")}
+        >
+          Mês
+        </Button>
+        <Button
+          variant={selectedPeriod === "year" ? "default" : "outline"}
+          onClick={() => setSelectedPeriod("year")}
+        >
+          Ano
+        </Button>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total de Pacientes
+              Contactos Recebidos {getPeriodLabel(selectedPeriod)}
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
+            <div className="text-2xl font-bold">{filteredContactsCount}</div>
             <p className="text-xs text-muted-foreground">
-              +20.1% desde o mês passado
+              {selectedPeriod === "today" ? "Novos contactos hoje" : `Total de contactos ${getPeriodLabel(selectedPeriod).toLowerCase()}`}
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Agendamentos Concluídos
-            </CardTitle>
-            <CalendarCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+573</div>
-            <p className="text-xs text-muted-foreground">
-              +180.1% desde o mês passado
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Fisioterapeutas Ativos
-            </CardTitle>
-            <Stethoscope className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">15</div>
-            <p className="text-xs text-muted-foreground">
-              +2 novos este mês
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Receita Total
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ 45.231,89</div>
-            <p className="text-xs text-muted-foreground">
-              +19% desde o mês passado
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader className="flex flex-row items-center">
-            <div className="grid gap-2">
-              <CardTitle>Visão Geral</CardTitle>
-              <CardDescription>
-                Visão geral dos agendamentos e pacientes.
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Conteúdo do gráfico ou tabela aqui */}
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-              Gráfico de Atividade (em breve)
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Agendamentos Recentes</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-8">
-            <div className="flex items-center gap-4">
-              <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">
-                  Maria Silva
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Fisioterapia Respiratória
-                </p>
-              </div>
-              <div className="ml-auto font-medium">Hoje, 10:00</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">
-                  João Santos
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Fisioterapia Ortopédica
-                </p>
-              </div>
-              <div className="ml-auto font-medium">Ontem, 14:30</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">
-                  Ana Costa
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Reabilitação Pós-AVC
-                </p>
-              </div>
-              <div className="ml-auto font-medium">2 dias atrás, 09:00</div>
-            </div>
           </CardContent>
         </Card>
       </div>

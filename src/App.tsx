@@ -5,10 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
-import Patients from "./pages/Patients";
-import Appointments from "./pages/Appointments";
-import Therapists from "./pages/Therapists";
-import Contacts from "./pages/Contacts"; // Import the new Contacts page
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,10 +18,6 @@ const App = () => (
         <Routes>
           <Route path="/" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
-            <Route path="contacts" element={<Contacts />} /> {/* Add the new Contacts route */}
-            <Route path="patients" element={<Patients />} />
-            <Route path="appointments" element={<Appointments />} />
-            <Route path="therapists" element={<Therapists />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
