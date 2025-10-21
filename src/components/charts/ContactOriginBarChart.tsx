@@ -14,19 +14,15 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
   const data = React.useMemo(() => {
     const processContacts = (contactList: Contact[]) => {
       const originCounts: { [key: string]: number } = {};
-      const convertedCounts: { [key: string]: number } = {};
       contactList.forEach(contact => {
         const origin = contact.origemcontacto || 'desconhecida';
         originCounts[origin] = (originCounts[origin] || 0) + 1;
-        if (contact.status === "Convertido") {
-          convertedCounts[origin] = (convertedCounts[origin] || 0) + 1;
-        }
       });
-      return { originCounts, convertedCounts };
+      return originCounts;
     };
 
-    const { originCounts: currentOriginCounts, convertedCounts: currentConvertedCounts } = processContacts(contacts);
-    const { originCounts: prevOriginCounts, convertedCounts: prevConvertedCounts } = processContacts(previousPeriodFilteredContacts);
+    const currentOriginCounts = processContacts(contacts);
+    const prevOriginCounts = processContacts(previousPeriodFilteredContacts);
 
     const allOrigins = new Set<string>([
       ...Object.keys(currentOriginCounts),
@@ -35,19 +31,12 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
 
     return Array.from(allOrigins).map(origin => {
       const currentTotal = currentOriginCounts[origin] || 0;
-      const currentConverted = currentConvertedCounts[origin] || 0;
-      const currentConversionRate = currentTotal > 0 ? (currentConverted / currentTotal) * 100 : 0;
-
       const previousTotal = prevOriginCounts[origin] || 0;
-      const previousConverted = prevConvertedCounts[origin] || 0;
-      const previousConversionRate = previousTotal > 0 ? (previousConverted / previousTotal) * 100 : 0;
 
       return {
         name: origin,
         currentValue: currentTotal,
-        currentConversionRate: currentConversionRate,
         previousValue: previousTotal,
-        previousConversionRate: previousConversionRate,
       };
     });
   }, [contacts, previousPeriodFilteredContacts]);
@@ -58,17 +47,11 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
-  // Custom label formatter for BarChart to display count and percentage
+  // Custom label formatter for BarChart to display only the count
   const renderCustomizedLabel = (props: any) => {
-    const { x, y, width, height, value, dataKey, payload } = props; // Destructure payload
+    const { x, y, width, height, value } = props;
 
-    // Se o valor for 0 ou o payload for indefinido, não renderizar o label
-    if (value === 0 || !payload) {
-      return null;
-    }
-
-    const isCurrent = dataKey === 'currentValue';
-    const conversionRate = isCurrent ? payload.currentConversionRate : payload.previousConversionRate;
+    if (value === 0) return null; // Don't show label for zero values
 
     // Position the label slightly to the right of the bar
     const offset = 5;
@@ -81,7 +64,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
         dominantBaseline="middle"
         className="text-xs"
       >
-        {`${value} (${conversionRate.toFixed(1)}%)`}
+        {value}
       </text>
     );
   };
@@ -106,7 +89,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
               data={data}
               margin={{
                 top: 20,
-                right: 100, // Increased right margin to accommodate labels
+                right: 50, // Ajustado para acomodar apenas o valor
                 left: 80,
                 bottom: 5,
               }}
@@ -133,16 +116,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
                 }}
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
                 itemStyle={{ color: 'hsl(var(--foreground))' }}
-                formatter={(value: number, name: string, props: any) => {
-                  const dataKey = props.dataKey;
-                  let conversionRate = 0;
-                  if (dataKey === 'currentValue') {
-                    conversionRate = props.payload.currentConversionRate;
-                  } else if (dataKey === 'previousValue') {
-                    conversionRate = props.payload.previousConversionRate;
-                  }
-                  return [`${value} (${conversionRate.toFixed(1)}%)`, name];
-                }}
+                formatter={(value: number, name: string) => [`${value}`, name]} // Apenas o valor
                 labelFormatter={(label: string) => capitalizeFirstLetter(label)}
               />
               <Legend

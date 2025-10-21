@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Users, TrendingUp, TrendingDown, CheckCircle, Percent } from "lucide-react";
+import { Terminal, Users, TrendingUp, TrendingDown } from "lucide-react"; // Removido CheckCircle, Percent
 import {
   isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
   subDays, subWeeks, subMonths, subYears,
@@ -98,18 +98,16 @@ const Dashboard = () => {
         return false;
       }
       return periodFilterFn(itemDate);
-    }).map((contact, index) => {
+    }).map((contact) => { // Removido 'index' pois não é mais necessário para mock de status
       let assignedOrigin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : '';
       if (!assignedOrigin) {
         assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
       }
 
-      const mockStatus = (index % 5 === 0) ? "Convertido" : contact.status;
-
       return {
         ...contact,
         origemcontacto: assignedOrigin,
-        status: mockStatus,
+        // Removido o mock de status "Convertido"
       };
     });
   };
@@ -126,27 +124,12 @@ const Dashboard = () => {
     return processContactsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start, end }));
   }, [contacts, selectedPeriod]);
 
-  // Calculate origin counts for previous period (this is now redundant for the chart, but kept for other cards if needed)
-  const previousPeriodOriginCounts = useMemo(() => {
-    if (selectedPeriod === "all") return {};
-    const counts: { [key: string]: number } = {};
-    previousPeriodFilteredContacts.forEach(item => {
-      const origin = item.origemcontacto || 'desconhecida';
-      counts[origin] = (counts[origin] || 0) + 1;
-    });
-    return counts;
-  }, [previousPeriodFilteredContacts, selectedPeriod]);
-
   const filteredContactsCount = useMemo(() => {
     return filteredContacts.length;
   }, [filteredContacts]);
 
   const activeContactsCount = useMemo(() => {
     return filteredContacts.filter(contact => contact.arquivado === "nao").length;
-  }, [filteredContacts]);
-
-  const convertedContactsCount = useMemo(() => {
-    return filteredContacts.filter(contact => contact.status === "Convertido").length;
   }, [filteredContacts]);
 
   const previousPeriodContactsCount = useMemo(() => {
@@ -159,31 +142,6 @@ const Dashboard = () => {
       return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
     }).length;
   }, [contacts, selectedPeriod]);
-
-  const previousPeriodConvertedContactsCount = useMemo(() => {
-    if (!contacts || selectedPeriod === "all") return 0;
-    const now = new Date();
-    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
-    return contacts.filter((contact, index) => {
-      if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
-      const contactDate = parseISO(contact.dataregisto);
-      const mockStatus = (index % 5 === 0) ? "Convertido" : contact.status;
-      return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end }) && mockStatus === "Convertido";
-    }).length;
-  }, [contacts, selectedPeriod]);
-
-  // New: Calculate Conversion Percentage
-  const conversionPercentage = useMemo(() => {
-    if (filteredContactsCount === 0) return 0;
-    return (convertedContactsCount / filteredContactsCount) * 100;
-  }, [convertedContactsCount, filteredContactsCount]);
-
-  // New: Calculate Previous Period Conversion Percentage
-  const previousConversionPercentage = useMemo(() => {
-    if (previousPeriodContactsCount === 0) return 0;
-    return (previousPeriodConvertedContactsCount / previousPeriodContactsCount) * 100;
-  }, [previousPeriodConvertedContactsCount, previousPeriodContactsCount]);
-
 
   const getPeriodLabel = (period: FilterPeriod) => {
     switch (period) {
@@ -304,8 +262,8 @@ const Dashboard = () => {
         </Button>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-2"> {/* Alterado para flexbox com rolagem */}
-        <Card className="min-w-[280px] flex-shrink-0"> {/* Adicionado min-w e flex-shrink-0 */}
+      <div className="flex gap-4 overflow-x-auto pb-2">
+        <Card className="min-w-[280px] flex-shrink-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Contactos
@@ -336,75 +294,13 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Cartão para Convertidos */}
-        <Card className="min-w-[280px] flex-shrink-0"> {/* Adicionado min-w e flex-shrink-0 */}
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Convertidos
-            </CardTitle>
-            <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
-              <CheckCircle className="h-4 w-4 text-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{convertedContactsCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Contactos com status "Convertido"
-            </p>
-            {selectedPeriod !== "all" && (
-              <p className="text-xs flex items-center">
-                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
-                <span className={cn("ml-1", getTrendTextColor(convertedContactsCount, previousPeriodConvertedContactsCount))}>
-                  {previousPeriodConvertedContactsCount}
-                </span>
-                {getTrendIcon(convertedContactsCount, previousPeriodConvertedContactsCount)}
-              </p>
-            )}
-            {selectedPeriod === "all" && (
-              <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Novo Cartão para Percentagem de Conversão */}
-        <Card className="min-w-[280px] flex-shrink-0"> {/* Adicionado min-w e flex-shrink-0 */}
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Taxa de Conversão
-            </CardTitle>
-            <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
-              <Percent className="h-4 w-4 text-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{conversionPercentage.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground">
-              Percentagem de contactos convertidos
-            </p>
-            {selectedPeriod !== "all" && (
-              <p className="text-xs flex items-center">
-                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
-                <span className={cn("ml-1", getTrendTextColor(conversionPercentage, previousConversionPercentage))}>
-                  {previousConversionPercentage.toFixed(1)}%
-                </span>
-                {getTrendIcon(conversionPercentage, previousConversionPercentage)}
-              </p>
-            )}
-            {selectedPeriod === "all" && (
-              <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        {/* Cartões de Convertidos e Taxa de Conversão removidos */}
       </div>
 
-      {/* Contact Origin Bar Chart - apenas com contactos */}
+      {/* Contact Origin Bar Chart */}
       <ContactOriginBarChart
         contacts={filteredContacts}
-        previousPeriodFilteredContacts={previousPeriodFilteredContacts} // Passar contactos filtrados do período anterior
+        previousPeriodFilteredContacts={previousPeriodFilteredContacts}
       />
     </div>
   );
