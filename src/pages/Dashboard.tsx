@@ -91,12 +91,19 @@ const Dashboard = () => {
   const processItemsForPeriod = <T extends Contact | Lead>(allItems: T[] | undefined, periodFilterFn: (itemDate: Date) => boolean) => {
     if (!allItems) return [];
     return allItems.filter((item) => {
-      if (!item.dataregisto || typeof item.dataregisto !== 'string') {
+      let itemDateString: string | undefined;
+      if ('dataregisto' in item) { // Check if it's a Contact
+        itemDateString = item.dataregisto;
+      } else if ('datacontactolead' in item) { // Check if it's a Lead
+        itemDateString = item.datacontactolead;
+      }
+
+      if (!itemDateString || typeof itemDateString !== 'string') {
         return false;
       }
-      const itemDate = parseISO(item.dataregisto);
+      const itemDate = parseISO(itemDateString);
       if (isNaN(itemDate.getTime())) {
-        console.warn(`Invalid date string for item ${item.id}: ${item.dataregisto}`);
+        console.warn(`Invalid date string for item ${item.id}: ${itemDateString}`);
         return false;
       }
       return periodFilterFn(itemDate);
@@ -176,8 +183,8 @@ const Dashboard = () => {
     const now = new Date();
     const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
     return leads.filter((lead) => {
-      if (!lead.dataregisto || typeof lead.dataregisto !== 'string') return false;
-      const leadDate = parseISO(lead.dataregisto);
+      if (!lead.datacontactolead || typeof lead.datacontactolead !== 'string') return false; // Usar datacontactolead
+      const leadDate = parseISO(lead.datacontactolead); // Usar datacontactolead
       return !isNaN(leadDate.getTime()) && isWithinInterval(leadDate, { start: start, end: end });
     }).length;
   }, [leads, selectedPeriod]);
