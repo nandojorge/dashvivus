@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Users, TrendingUp, TrendingDown, CheckCircle } from "lucide-react"; // Adicionado CheckCircle para 'Convertidos'
+import { Terminal, Users, TrendingUp, TrendingDown, CheckCircle, Percent } from "lucide-react"; // Adicionado Percent
 import {
   isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
   subDays, subWeeks, subMonths, subYears,
@@ -174,6 +174,19 @@ const Dashboard = () => {
     }).length;
   }, [contacts, selectedPeriod]);
 
+  // New: Calculate Conversion Percentage
+  const conversionPercentage = useMemo(() => {
+    if (filteredContactsCount === 0) return 0;
+    return (convertedContactsCount / filteredContactsCount) * 100;
+  }, [convertedContactsCount, filteredContactsCount]);
+
+  // New: Calculate Previous Period Conversion Percentage
+  const previousConversionPercentage = useMemo(() => {
+    if (previousPeriodContactsCount === 0) return 0;
+    return (previousPeriodConvertedContactsCount / previousPeriodContactsCount) * 100;
+  }, [previousPeriodConvertedContactsCount, previousPeriodContactsCount]);
+
+
   const getPeriodLabel = (period: FilterPeriod) => {
     switch (period) {
       case "today":
@@ -325,7 +338,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Novo Cartão para Convertidos */}
+        {/* Cartão para Convertidos */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -347,6 +360,38 @@ const Dashboard = () => {
                   {previousPeriodConvertedContactsCount}
                 </span>
                 {getTrendIcon(convertedContactsCount, previousPeriodConvertedContactsCount)}
+              </p>
+            )}
+            {selectedPeriod === "all" && (
+              <p className="text-xs text-muted-foreground">
+                {getPreviousPeriodLabel(selectedPeriod)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Novo Cartão para Percentagem de Conversão */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Taxa de Conversão
+            </CardTitle>
+            <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
+              <Percent className="h-4 w-4 text-foreground" /> {/* Ícone para Percentagem */}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{conversionPercentage.toFixed(1)}%</div>
+            <p className="text-xs text-muted-foreground">
+              Percentagem de contactos convertidos
+            </p>
+            {selectedPeriod !== "all" && (
+              <p className="text-xs flex items-center">
+                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("ml-1", getTrendTextColor(conversionPercentage, previousConversionPercentage))}>
+                  {previousConversionPercentage.toFixed(1)}%
+                </span>
+                {getTrendIcon(conversionPercentage, previousConversionPercentage)}
               </p>
             )}
             {selectedPeriod === "all" && (
