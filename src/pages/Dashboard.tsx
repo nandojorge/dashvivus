@@ -17,6 +17,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
+import ConversionRateByOriginChart from "@/components/charts/ConversionRateByOriginChart"; // Importar o novo componente
 import ContactListByPeriod from "@/components/ContactListByPeriod";
 import { cn } from "@/lib/utils";
 
@@ -101,7 +102,7 @@ const Dashboard = () => {
       return periodFilterFn(itemDate);
     }).map((contact) => {
       let assignedOrigin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : '';
-      if (!assignedOrigin) {
+      if (!assignedOrigin || !origins.includes(assignedOrigin)) { // Ensure assigned origin is one of the defined ones
         assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
       }
 
@@ -320,6 +321,12 @@ const Dashboard = () => {
 
       {/* Contact Origin Bar Chart */}
       <ContactOriginBarChart
+        contacts={filteredContacts}
+        previousPeriodFilteredContacts={previousPeriodFilteredContacts}
+      />
+
+      {/* Conversion Rate By Origin Chart */}
+      <ConversionRateByOriginChart
         contacts={filteredContacts}
         previousPeriodFilteredContacts={previousPeriodFilteredContacts}
       />
