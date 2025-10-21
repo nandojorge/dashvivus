@@ -18,6 +18,7 @@ import {
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
 import { cn } from "@/lib/utils"; // Importar cn para combinar classes Tailwind
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 type FilterPeriod = "today" | "week" | "month" | "year";
 
@@ -68,6 +69,7 @@ const getPeriodFilter = (contactDate: Date, period: FilterPeriod) => {
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
@@ -247,6 +249,13 @@ const Dashboard = () => {
           onClick={() => setSelectedPeriod("year")}
         >
           Ano
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => navigate("/contacts")} // Button to navigate to ContactsPage
+          className="ml-auto" // Push button to the right
+        >
+          <Users className="h-4 w-4 mr-2" /> Ver Todos os Contactos
         </Button>
       </div>
 
