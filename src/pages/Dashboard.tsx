@@ -143,34 +143,7 @@ const Dashboard = () => {
     }).length;
   }, [contacts, selectedPeriod]);
 
-  // New memoized value for additional past daily counts
-  const additionalPastDailyCounts = useMemo(() => {
-    if (selectedPeriod !== "today" || !contacts) return [];
-
-    const now = new Date();
-    const counts: { label: string; count: number }[] = [];
-    const numAdditionalPastDaysToShow = 2; // For "Antes de Ontem" and "3 dias atrás"
-
-    for (let i = 2; i <= numAdditionalPastDaysToShow + 1; i++) { // Start from 2 days ago
-        const pastDay = subDays(now, i);
-        const start = startOfDay(pastDay);
-        const end = endOfDay(pastDay);
-
-        const count = contacts.filter((contact) => {
-            if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
-            const contactDate = parseISO(contact.dataregisto);
-            return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start, end });
-        }).length;
-
-        let label = "";
-        if (i === 2) label = "Antes de Ontem";
-        else label = `${i} dias atrás`;
-
-        counts.push({ label, count });
-    }
-    return counts;
-  }, [contacts, selectedPeriod]);
-
+  // Removed additionalPastDailyCounts as per user request.
 
   const getPeriodLabel = (period: FilterPeriod) => {
     switch (period) {
@@ -305,21 +278,13 @@ const Dashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{filteredContactsCount}</div>
             {selectedPeriod === "today" ? (
-                <>
-                    <p className="text-xs flex items-center">
-                        <span className="text-foreground">Ontem:</span>
-                        <span className={cn("ml-1", getTrendTextColor(filteredContactsCount, previousPeriodContactsCount))}>
-                            {previousPeriodContactsCount}
-                        </span>
-                        {getTrendIcon(filteredContactsCount, previousPeriodContactsCount)}
-                    </p>
-                    {additionalPastDailyCounts.map((dayData, index) => (
-                        <p key={index} className="text-xs text-muted-foreground flex items-center">
-                            <span className="text-foreground">{dayData.label}:</span>
-                            <span className="ml-1">{dayData.count}</span>
-                        </p>
-                    ))}
-                </>
+                <p className="text-xs flex items-center">
+                    <span className="text-foreground">Ontem:</span>
+                    <span className={cn("ml-1", getTrendTextColor(filteredContactsCount, previousPeriodContactsCount))}>
+                        {previousPeriodContactsCount}
+                    </span>
+                    {getTrendIcon(filteredContactsCount, previousPeriodContactsCount)}
+                </p>
             ) : selectedPeriod !== "all" ? (
                 <p className="text-xs flex items-center">
                     <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
