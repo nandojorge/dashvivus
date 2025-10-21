@@ -16,7 +16,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
     const allOrigins = new Set<string>();
 
     contacts.forEach(contact => {
-      const origin = contact.origemcontacto || 'Desconhecida';
+      const origin = contact.origemcontacto || 'desconhecida'; // Ensure 'desconhecida' is lowercase
       currentOriginCounts[origin] = (currentOriginCounts[origin] || 0) + 1;
       allOrigins.add(origin);
     });
@@ -79,7 +79,14 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
                 itemStyle={{ color: 'hsl(var(--foreground))' }}
               />
-              <Legend />
+              <Legend
+                formatter={(value) => {
+                  if (value === "Período Anterior") {
+                    return <span className="text-foreground">{value}</span>;
+                  }
+                  return value;
+                }}
+              />
               <Bar dataKey="currentValue" name="Contactos Atuais" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={16} />
               <Bar dataKey="previousValue" name="Período Anterior" fill="hsl(var(--secondary-darker))" radius={[0, 4, 4, 0]} barSize={16} />
             </BarChart>
