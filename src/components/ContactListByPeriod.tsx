@@ -127,30 +127,7 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({
             : `Contactos (${groupedContacts.length} grupos)`}
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
-        {groupedContacts.length > 0 ? (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead className="text-right">Nº de Contactos</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {groupedContacts.map((group) => (
-                  <TableRow key={group.label}>
-                    <TableCell className="font-medium">{group.label}</TableCell>
-                    <TableCell className="text-right">{group.contacts.length}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <p className="text-muted-foreground">Nenhum contacto encontrado para este período.</p>
-        )}
-      </CardContent>
+      {/* O conteúdo da tabela foi removido daqui */}
     </Card>
   );
 };
