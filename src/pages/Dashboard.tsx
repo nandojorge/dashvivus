@@ -3,14 +3,12 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getContacts } from "@/api/contacts";
-import { getLeads } from "@/api/leads"; // Importar a função getLeads
 import { Contact } from "@/types/contact";
-import { Lead } from "@/types/lead"; // Importar o tipo Lead
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Users, TrendingUp, TrendingDown, UserPlus } from "lucide-react"; // Adicionar UserPlus para leads
+import { Terminal, Users, TrendingUp, TrendingDown } from "lucide-react"; // Removed UserPlus for leads
 import {
   isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
   subDays, subWeeks, subMonths, subYears,
@@ -53,7 +51,7 @@ const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date) => {
   return { start, end };
 };
 
-// Helper function to filter items (contacts or leads) by period
+// Helper function to filter items (contacts) by period
 const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
   const now = new Date();
   switch (period) {
@@ -75,27 +73,20 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
 
-  const { data: contacts, isLoading: isLoadingContacts, isError: isErrorContacts, error: errorContacts } = useQuery<Contact[], Error>({
+  const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
     queryFn: getContacts,
-  });
-
-  const { data: leads, isLoading: isLoadingLeads, isError: isErrorLeads, error: errorLeads } = useQuery<Lead[], Error>({
-    queryKey: ["leads"],
-    queryFn: getLeads,
   });
 
   // Define origins in lowercase for consistency
   const origins = ["website", "referral", "social media", "email marketing", "direct"];
 
-  const processItemsForPeriod = <T extends Contact | Lead>(allItems: T[] | undefined, periodFilterFn: (itemDate: Date) => boolean) => {
-    if (!allItems) return [];
-    return allItems.filter((item) => {
+  const processContactsForPeriod = (allContacts: Contact[] | undefined, periodFilterFn: (contactDate: Date) => boolean) => {
+    if (!allContacts) return [];
+    return allContacts.filter((contact) => {
       let itemDateString: string | undefined;
-      if ('dataregisto' in item) { // Check if it's a Contact
-        itemDateString = item.dataregisto;
-      } else if ('datacontactolead' in item) { // Check if it's a Lead
-        itemDateString = item.datacontactolead;
+      if ('dataregisto' in contact) { // Check if it's a Contact
+        itemDateString = contact.dataregisto;
       }
 
       if (!itemDateString || typeof itemDateString !== 'string') {
@@ -103,57 +94,45 @@ const Dashboard = () => {
       }
       const itemDate = parseISO(itemDateString);
       if (isNaN(itemDate.getTime())) {
-        console.warn(`Invalid date string for item ${item.id}: ${itemDateString}`);
+        console.warn(`Invalid date string for item ${contact.id}: ${itemDateString}`);
         return false;
       }
       return periodFilterFn(itemDate);
-    }).map(item => {
-      let assignedOrigin = item.origemcontacto ? item.origemcontacto.toLowerCase() : ''; // Normalize to lowercase
+    }).map(contact => {
+      let assignedOrigin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : ''; // Normalize to lowercase
       if (!assignedOrigin) {
         assignedOrigin = origins[Math.floor(Math.random() * origins.length)]; // Assign mock origin (already lowercase)
-        // console.warn(`Item ${item.id} (${item.nome}) has no 'origemcontacto'. Assigning mock origin: ${assignedOrigin}`);
+        // console.warn(`Item ${contact.id} (${contact.nome}) has no 'origemcontacto'. Assigning mock origin: ${assignedOrigin}`);
       }
       return {
-        ...item,
+        ...contact,
         origemcontacto: assignedOrigin
       };
     });
   };
 
   const filteredContacts = useMemo(() => {
-    return processItemsForPeriod(contacts, (contactDate) => getPeriodFilter(contactDate, selectedPeriod));
+    return processContactsForPeriod(contacts, (contactDate) => getPeriodFilter(contactDate, selectedPeriod));
   }, [contacts, selectedPeriod]);
-
-  const filteredLeads = useMemo(() => {
-    return processItemsForPeriod(leads, (leadDate) => getPeriodFilter(leadDate, selectedPeriod));
-  }, [leads, selectedPeriod]);
 
   // Calculate previous period contacts
   const previousPeriodFilteredContacts = useMemo(() => {
     if (!contacts || selectedPeriod === "all") return []; // No previous period comparison for "all"
     const now = new Date();
     const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
-    return processItemsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start, end }));
+    return processContactsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start, end }));
   }, [contacts, selectedPeriod]);
-
-  // Calculate previous period leads
-  const previousPeriodFilteredLeads = useMemo(() => {
-    if (!leads || selectedPeriod === "all") return []; // No previous period comparison for "all"
-    const now = new Date();
-    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
-    return processItemsForPeriod(leads, (leadDate) => isWithinInterval(leadDate, { start, end }));
-  }, [leads, selectedPeriod]);
 
   // Calculate origin counts for previous period
   const previousPeriodOriginCounts = useMemo(() => {
     if (selectedPeriod === "all") return {}; // No previous period comparison for "all"
     const counts: { [key: string]: number } = {};
-    [...previousPeriodFilteredContacts, ...previousPeriodFilteredLeads].forEach(item => {
+    previousPeriodFilteredContacts.forEach(item => {
       const origin = item.origemcontacto || 'desconhecida';
       counts[origin] = (counts[origin] || 0) + 1;
     });
     return counts;
-  }, [previousPeriodFilteredContacts, previousPeriodFilteredLeads, selectedPeriod]);
+  }, [previousPeriodFilteredContacts, selectedPeriod]);
 
   const filteredContactsCount = useMemo(() => {
     return filteredContacts.length;
@@ -162,10 +141,6 @@ const Dashboard = () => {
   const activeContactsCount = useMemo(() => {
     return filteredContacts.filter(contact => contact.arquivado === "nao").length;
   }, [filteredContacts]);
-
-  const filteredLeadsCount = useMemo(() => {
-    return filteredLeads.length;
-  }, [filteredLeads]);
 
   const previousPeriodContactsCount = useMemo(() => {
     if (!contacts || selectedPeriod === "all") return 0;
@@ -177,17 +152,6 @@ const Dashboard = () => {
       return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
     }).length;
   }, [contacts, selectedPeriod]);
-
-  const previousPeriodLeadsCount = useMemo(() => {
-    if (!leads || selectedPeriod === "all") return 0;
-    const now = new Date();
-    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
-    return leads.filter((lead) => {
-      if (!lead.datacontactolead || typeof lead.datacontactolead !== 'string') return false; // Usar datacontactolead
-      const leadDate = parseISO(lead.datacontactolead); // Usar datacontactolead
-      return !isNaN(leadDate.getTime()) && isWithinInterval(leadDate, { start: start, end: end });
-    }).length;
-  }, [leads, selectedPeriod]);
 
   const getPeriodLabel = (period: FilterPeriod) => {
     switch (period) {
@@ -241,7 +205,7 @@ const Dashboard = () => {
     return "text-muted-foreground"; // Cor padrão se não houver alteração
   };
 
-  if (isLoadingContacts || isLoadingLeads) {
+  if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
@@ -257,7 +221,7 @@ const Dashboard = () => {
     );
   }
 
-  if (isErrorContacts || isErrorLeads) {
+  if (isError) {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
@@ -265,7 +229,7 @@ const Dashboard = () => {
           <Terminal className="h-4 w-4" />
           <AlertTitle>Erro</AlertTitle>
           <AlertDescription>
-            Ocorreu um erro ao carregar os dados: {errorContacts?.message || errorLeads?.message || "Erro desconhecido."}
+            Ocorreu um erro ao carregar os dados: {error?.message || "Erro desconhecido."}
           </AlertDescription>
         </Alert>
       </div>
@@ -339,43 +303,11 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Novo Cartão para Leads */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Leads
-            </CardTitle>
-            <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
-              <UserPlus className="h-4 w-4 text-foreground" /> {/* Ícone para Leads */}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{filteredLeadsCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Novas leads: {filteredLeads.filter(lead => lead.status === "Novo").length} {/* Exemplo de métrica para leads */}
-            </p>
-            {selectedPeriod !== "all" && (
-              <p className="text-xs flex items-center">
-                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
-                <span className={cn("ml-1", getTrendTextColor(filteredLeadsCount, previousPeriodLeadsCount))}>
-                  {previousPeriodLeadsCount}
-                </span>
-                {getTrendIcon(filteredLeadsCount, previousPeriodLeadsCount)}
-              </p>
-            )}
-            {selectedPeriod === "all" && (
-              <p className="text-xs text-muted-foreground">
-                {getPreviousPeriodLabel(selectedPeriod)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Contact Origin Bar Chart - agora inclui leads para a contagem de origem */}
+      {/* Contact Origin Bar Chart - agora apenas com contactos */}
       <ContactOriginBarChart
-        contacts={[...filteredContacts, ...filteredLeads]} // Passar contactos e leads para o gráfico de origem
+        contacts={filteredContacts} // Passar apenas contactos para o gráfico de origem
         previousPeriodOriginCounts={previousPeriodOriginCounts}
       />
     </div>
