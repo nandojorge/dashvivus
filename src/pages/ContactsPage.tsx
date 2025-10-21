@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, Users } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns"; // Adicionado parseISO
 import { ptBR } from "date-fns/locale";
 
 const ContactsPage = () => {
