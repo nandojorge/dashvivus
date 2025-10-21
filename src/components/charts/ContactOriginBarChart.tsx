@@ -31,6 +31,12 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
     }));
   }, [contacts, previousPeriodOriginCounts]);
 
+  // Helper function to capitalize the first letter of a string
+  const capitalizeFirstLetter = (string: string) => {
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+
   // Calculate dynamic height for the chart based on number of bars
   // Each category (with two bars) needs about 45px height, plus some padding for top/bottom and legend
   const minCategoryHeight = 45; // Increased from 35 to 45 for more spacing between categories
@@ -68,6 +74,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
                 className="text-sm"
                 width={70}
                 interval={0}
+                tickFormatter={capitalizeFirstLetter} // Apply formatter here
               />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
@@ -78,6 +85,13 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
                 }}
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
                 itemStyle={{ color: 'hsl(var(--foreground))' }}
+                formatter={(value: number, name: string) => {
+                  if (name === "Contactos Atuais" || name === "Período Anterior") {
+                    return [value, name];
+                  }
+                  return value;
+                }}
+                labelFormatter={(label: string) => capitalizeFirstLetter(label)} // Also format tooltip label
               />
               <Legend
                 formatter={(value) => {
