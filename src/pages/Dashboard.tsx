@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Users } from "lucide-react";
+import { Terminal, Users, TrendingUp, TrendingDown } from "lucide-react"; // Importar TrendingUp e TrendingDown
 import {
   isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
   subDays, subWeeks, subMonths, subYears,
@@ -170,6 +170,15 @@ const Dashboard = () => {
     }
   };
 
+  const getTrendIcon = (currentValue: number, previousValue: number) => {
+    if (currentValue > previousValue) {
+      return <TrendingUp className="h-4 w-4 text-green-500 ml-1" />;
+    } else if (currentValue < previousValue) {
+      return <TrendingDown className="h-4 w-4 text-red-500 ml-1" />;
+    }
+    return null;
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
@@ -244,8 +253,9 @@ const Dashboard = () => {
             <p className="text-xs text-muted-foreground">
               Ativos: {activeContactsCount}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground flex items-center"> {/* Adicionado flex e items-center */}
               {getPreviousPeriodLabel(selectedPeriod)}: {previousPeriodContactsCount}
+              {getTrendIcon(filteredContactsCount, previousPeriodContactsCount)}
             </p>
           </CardContent>
         </Card>
