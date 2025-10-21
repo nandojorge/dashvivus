@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Users, TrendingUp, TrendingDown } from "lucide-react"; // Removido CheckCircle, Percent
+import { Terminal, Users, TrendingUp, TrendingDown } from "lucide-react";
 import {
   isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
   subDays, subWeeks, subMonths, subYears,
@@ -18,6 +18,8 @@ import {
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
 import { cn } from "@/lib/utils";
+import { DialogTrigger } from "@/components/ui/dialog"; // Importar DialogTrigger
+import { ActiveContactsDialog } from "@/components/ActiveContactsDialog"; // Importar o novo componente
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all";
 
@@ -72,6 +74,7 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
+  const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false); // Estado para controlar o diálogo
 
   const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
@@ -98,7 +101,7 @@ const Dashboard = () => {
         return false;
       }
       return periodFilterFn(itemDate);
-    }).map((contact) => { // Removido 'index' pois não é mais necessário para mock de status
+    }).map((contact) => {
       let assignedOrigin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : '';
       if (!assignedOrigin) {
         assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
@@ -107,7 +110,6 @@ const Dashboard = () => {
       return {
         ...contact,
         origemcontacto: assignedOrigin,
-        // Removido o mock de status "Convertido"
       };
     });
   };
@@ -274,9 +276,6 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{filteredContactsCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Ativos: {activeContactsCount}
-            </p>
             {selectedPeriod !== "all" && (
               <p className="text-xs flex items-center">
                 <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
@@ -291,16 +290,26 @@ const Dashboard = () => {
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => setIsAlertDialogOpen(true)}>
+                Ver Ativos
+              </Button>
+            </DialogTrigger>
           </CardContent>
         </Card>
-
-        {/* Cartões de Convertidos e Taxa de Conversão removidos */}
       </div>
 
       {/* Contact Origin Bar Chart */}
       <ContactOriginBarChart
         contacts={filteredContacts}
         previousPeriodFilteredContacts={previousPeriodFilteredContacts}
+      />
+
+      {/* Diálogo para Contactos Ativos */}
+      <ActiveContactsDialog
+        activeCount={activeContactsCount}
+        isOpen={isAlertDialogOpen}
+        onOpenChange={setIsAlertDialogOpen}
       />
     </div>
   );
