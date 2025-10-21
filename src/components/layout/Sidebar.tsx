@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "react-router-dom";
-import { Home, Stethoscope, Menu } from "lucide-react"; // Removed Users icon
+import { Users, Stethoscope, Menu, UserPlus } from "lucide-react"; // Changed Home to Users, added UserPlus
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -11,7 +11,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { icon: Home, label: "Dashboard", path: "/" },
+  { icon: Users, label: "Contactos", path: "/" }, // Changed label to Contactos and icon to Users
+  { icon: UserPlus, label: "Leads", path: "/leads" }, // New item for Leads
 ];
 
 export const Sidebar = () => {
