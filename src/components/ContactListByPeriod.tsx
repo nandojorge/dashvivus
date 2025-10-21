@@ -8,6 +8,10 @@ import {
   parseISO,
   startOfWeek,
   endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -34,22 +38,25 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({ contacts, sel
       let label: string;
 
       switch (selectedPeriod) {
-        case "today":
-        case "week": // Para 'today' e 'week', agrupar por dia
+        case "today": // Agrupar por dia
           key = format(contactDate, 'yyyy-MM-dd');
           label = format(contactDate, 'dd MMMM yyyy', { locale: ptBR });
           break;
-        case "month": // Para 'month', agrupar por semana
+        case "week": // Agrupar por semana
           const weekStart = startOfWeek(contactDate, { weekStartsOn: 0, locale: ptBR });
           const weekEnd = endOfWeek(contactDate, { weekStartsOn: 0, locale: ptBR });
           key = format(weekStart, 'yyyy-MM-dd'); // Usar o início da semana como chave
           label = `Semana ${format(weekStart, 'w', { locale: ptBR })} (${format(weekStart, 'dd MMM', { locale: ptBR })} - ${format(weekEnd, 'dd MMM', { locale: ptBR })})`;
           break;
-        case "year": // Para 'year', agrupar por mês
+        case "month": // Agrupar por mês
           key = format(contactDate, 'yyyy-MM');
           label = format(contactDate, 'MMMM yyyy', { locale: ptBR });
           break;
-        case "all": // Para 'all', agrupar por ano
+        case "year": // Agrupar por ano
+          key = format(contactDate, 'yyyy');
+          label = format(contactDate, 'yyyy', { locale: ptBR });
+          break;
+        case "all": // Agrupar por ano para "Todos"
         default:
           key = format(contactDate, 'yyyy');
           label = format(contactDate, 'yyyy', { locale: ptBR });
@@ -65,7 +72,7 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({ contacts, sel
     // Sort groups by date (descending)
     const sortedKeys = Object.keys(groups).sort((a, b) => {
       // For 'all' period, sort by year descending
-      if (selectedPeriod === "all") {
+      if (selectedPeriod === "all" || selectedPeriod === "year") {
         return parseInt(b) - parseInt(a);
       }
       // For other periods, sort by date key descending
@@ -83,13 +90,13 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({ contacts, sel
   const getTitle = () => {
     switch (selectedPeriod) {
       case "today":
-        return "Contactos de Hoje (por Dia)";
+        return "Contactos de Hoje";
       case "week":
-        return "Contactos desta Semana (por Dia)";
+        return "Contactos desta Semana";
       case "month":
-        return "Contactos deste Mês (por Semana)";
+        return "Contactos deste Mês";
       case "year":
-        return "Contactos deste Ano (por Mês)";
+        return "Contactos deste Ano";
       case "all":
         return "Todos os Contactos (por Ano)";
       default:
