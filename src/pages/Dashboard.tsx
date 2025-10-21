@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Users, TrendingUp, TrendingDown, CheckCircle, Percent } from "lucide-react"; // Adicionado Percent
+import { Terminal, Users, TrendingUp, TrendingDown, CheckCircle, Percent } from "lucide-react";
 import {
   isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
   subDays, subWeeks, subMonths, subYears,
@@ -19,7 +19,7 @@ import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
 import { cn } from "@/lib/utils";
 
-type FilterPeriod = "today" | "week" | "month" | "year" | "all"; // Added "all"
+type FilterPeriod = "today" | "week" | "month" | "year" | "all";
 
 // Helper function to get previous period interval
 const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date) => {
@@ -43,10 +43,10 @@ const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date) => {
       start = startOfYear(subYears(now, 1));
       end = endOfYear(subYears(now, 1));
       break;
-    case "all": // For "all", previous period concept doesn't apply directly for comparison
-      return { start: new Date(0), end: now }; // Return a very wide range, but we'll handle display separately
+    case "all":
+      return { start: new Date(0), end: now };
     default:
-      return { start: now, end: now }; // Should not happen
+      return { start: now, end: now };
   }
   return { start, end };
 };
@@ -64,7 +64,7 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
     case "year":
       return isThisYear(itemDate);
     case "all":
-      return true; // No date filtering for "all"
+      return true;
     default:
       return false;
   }
@@ -85,7 +85,7 @@ const Dashboard = () => {
     if (!allContacts) return [];
     return allContacts.filter((contact) => {
       let itemDateString: string | undefined;
-      if ('dataregisto' in contact) { // Check if it's a Contact
+      if ('dataregisto' in contact) {
         itemDateString = contact.dataregisto;
       }
 
@@ -98,20 +98,18 @@ const Dashboard = () => {
         return false;
       }
       return periodFilterFn(itemDate);
-    }).map((contact, index) => { // Adicionado 'index' para a lógica de mock
-      let assignedOrigin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : ''; // Normalize to lowercase
+    }).map((contact, index) => {
+      let assignedOrigin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : '';
       if (!assignedOrigin) {
-        assignedOrigin = origins[Math.floor(Math.random() * origins.length)]; // Assign mock origin (already lowercase)
-        // console.warn(`Item ${contact.id} (${contact.nome}) has no 'origemcontacto'. Assigning mock origin: ${assignedOrigin}`);
+        assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
       }
 
-      // Lógica de mock temporária para o status "Convertido"
-      const mockStatus = (index % 5 === 0) ? "Convertido" : contact.status; // A cada 5º contacto é "Convertido"
+      const mockStatus = (index % 5 === 0) ? "Convertido" : contact.status;
 
       return {
         ...contact,
         origemcontacto: assignedOrigin,
-        status: mockStatus, // Atribui o status mockado
+        status: mockStatus,
       };
     });
   };
@@ -122,7 +120,7 @@ const Dashboard = () => {
 
   // Calculate previous period contacts
   const previousPeriodFilteredContacts = useMemo(() => {
-    if (!contacts || selectedPeriod === "all") return []; // No previous period comparison for "all"
+    if (!contacts || selectedPeriod === "all") return [];
     const now = new Date();
     const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
     return processContactsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start, end }));
@@ -130,7 +128,7 @@ const Dashboard = () => {
 
   // Calculate origin counts for previous period
   const previousPeriodOriginCounts = useMemo(() => {
-    if (selectedPeriod === "all") return {}; // No previous period comparison for "all"
+    if (selectedPeriod === "all") return {};
     const counts: { [key: string]: number } = {};
     previousPeriodFilteredContacts.forEach(item => {
       const origin = item.origemcontacto || 'desconhecida';
@@ -166,10 +164,10 @@ const Dashboard = () => {
     if (!contacts || selectedPeriod === "all") return 0;
     const now = new Date();
     const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
-    return contacts.filter((contact, index) => { // Usar index para o mock
+    return contacts.filter((contact, index) => {
       if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
       const contactDate = parseISO(contact.dataregisto);
-      const mockStatus = (index % 5 === 0) ? "Convertido" : contact.status; // Aplicar o mesmo mock
+      const mockStatus = (index % 5 === 0) ? "Convertido" : contact.status;
       return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end }) && mockStatus === "Convertido";
     }).length;
   }, [contacts, selectedPeriod]);
@@ -215,7 +213,7 @@ const Dashboard = () => {
       case "year":
         return "Ano Anterior";
       case "all":
-        return "N/A"; // No meaningful previous period for "all"
+        return "N/A";
       default:
         return "";
     }
@@ -236,7 +234,7 @@ const Dashboard = () => {
     } else if (currentValue < previousValue) {
       return "text-red-500";
     }
-    return "text-muted-foreground"; // Cor padrão se não houver alteração
+    return "text-muted-foreground";
   };
 
   if (isLoading) {
@@ -306,8 +304,8 @@ const Dashboard = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        <Card>
+      <div className="flex gap-4 overflow-x-auto pb-2"> {/* Alterado para flexbox com rolagem */}
+        <Card className="min-w-[280px] flex-shrink-0"> {/* Adicionado min-w e flex-shrink-0 */}
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Contactos
@@ -339,13 +337,13 @@ const Dashboard = () => {
         </Card>
 
         {/* Cartão para Convertidos */}
-        <Card>
+        <Card className="min-w-[280px] flex-shrink-0"> {/* Adicionado min-w e flex-shrink-0 */}
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Convertidos
             </CardTitle>
             <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
-              <CheckCircle className="h-4 w-4 text-foreground" /> {/* Ícone para Convertidos */}
+              <CheckCircle className="h-4 w-4 text-foreground" />
             </div>
           </CardHeader>
           <CardContent>
@@ -371,13 +369,13 @@ const Dashboard = () => {
         </Card>
 
         {/* Novo Cartão para Percentagem de Conversão */}
-        <Card>
+        <Card className="min-w-[280px] flex-shrink-0"> {/* Adicionado min-w e flex-shrink-0 */}
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Taxa de Conversão
             </CardTitle>
             <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
-              <Percent className="h-4 w-4 text-foreground" /> {/* Ícone para Percentagem */}
+              <Percent className="h-4 w-4 text-foreground" />
             </div>
           </CardHeader>
           <CardContent>
@@ -405,7 +403,7 @@ const Dashboard = () => {
 
       {/* Contact Origin Bar Chart - apenas com contactos */}
       <ContactOriginBarChart
-        contacts={filteredContacts} // Passar apenas contactos para o gráfico de origem
+        contacts={filteredContacts}
         previousPeriodOriginCounts={previousPeriodOriginCounts}
       />
     </div>
