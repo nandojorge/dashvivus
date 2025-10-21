@@ -281,7 +281,7 @@ const Dashboard = () => {
               Contactos
             </CardTitle>
             <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
-              <Users className="h-4 w-4 text-primary" />
+              <Users className="h-4 w-4 text-foreground" /> {/* Changed icon color to text-foreground */}
             </div>
           </CardHeader>
           <CardContent>
@@ -290,8 +290,11 @@ const Dashboard = () => {
               Ativos: {activeContactsCount}
             </p>
             {selectedPeriod !== "all" && ( // Only show previous period comparison if not "all"
-              <p className={cn("text-xs flex items-center", getTrendTextColor(filteredContactsCount, previousPeriodContactsCount))}>
-                {getPreviousPeriodLabel(selectedPeriod)}: {previousPeriodContactsCount}
+              <p className="text-xs flex items-center"> {/* Removed dynamic color from parent p tag */}
+                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span> {/* Applied text-foreground here */}
+                <span className={cn("ml-1", getTrendTextColor(filteredContactsCount, previousPeriodContactsCount))}>
+                  {previousPeriodContactsCount}
+                </span>
                 {getTrendIcon(filteredContactsCount, previousPeriodContactsCount)}
               </p>
             )}
