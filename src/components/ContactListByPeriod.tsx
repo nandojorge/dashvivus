@@ -120,14 +120,7 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>
-          {selectedPeriod === "today"
-            ? "Contactos por Dia (Histórico)"
-            : `Contactos (${groupedContacts.length} grupos)`}
-        </CardTitle>
-      </CardHeader>
-      {/* O conteúdo da tabela foi removido daqui */}
+      {/* CardHeader foi removido daqui */}
     </Card>
   );
 };
