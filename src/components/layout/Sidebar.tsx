@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "react-router-dom";
-import { Home, Stethoscope, Menu, Users } from "lucide-react"; // Added Users icon
+import { Home, Stethoscope, Menu } from "lucide-react"; // Removed Users icon
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: Home, label: "Dashboard", path: "/" },
-  { icon: Users, label: "Contactos", path: "/contacts" }, // New navigation item for Contacts
 ];
 
 export const Sidebar = () => {

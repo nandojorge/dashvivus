@@ -17,10 +17,9 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
-import { cn } from "@/lib/utils"; // Importar cn para combinar classes Tailwind
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { cn } from "@/lib/utils";
 
-type FilterPeriod = "today" | "week" | "month" | "year";
+type FilterPeriod = "today" | "week" | "month" | "year" | "all"; // Added "all"
 
 // Helper function to get previous period interval
 const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date) => {
@@ -44,6 +43,8 @@ const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date) => {
       start = startOfYear(subYears(now, 1));
       end = endOfYear(subYears(now, 1));
       break;
+    case "all": // For "all", previous period concept doesn't apply directly for comparison
+      return { start: new Date(0), end: now }; // Return a very wide range, but we'll handle display separately
     default:
       return { start: now, end: now }; // Should not happen
   }
@@ -62,6 +63,8 @@ const getPeriodFilter = (contactDate: Date, period: FilterPeriod) => {
       return isThisMonth(contactDate);
     case "year":
       return isThisYear(contactDate);
+    case "all":
+      return true; // No date filtering for "all"
     default:
       return false;
   }
@@ -69,7 +72,6 @@ const getPeriodFilter = (contactDate: Date, period: FilterPeriod) => {
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
-  const navigate = useNavigate(); // Initialize useNavigate
 
   const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
@@ -102,7 +104,7 @@ const Dashboard = () => {
 
   // Calculate previous period contacts
   const previousPeriodFilteredContacts = useMemo(() => {
-    if (!contacts) return [];
+    if (!contacts || selectedPeriod === "all") return []; // No previous period comparison for "all"
     const now = new Date();
     const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
     return processContactsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start, end }));
@@ -110,13 +112,14 @@ const Dashboard = () => {
 
   // Calculate origin counts for previous period
   const previousPeriodOriginCounts = useMemo(() => {
+    if (selectedPeriod === "all") return {}; // No previous period comparison for "all"
     const counts: { [key: string]: number } = {};
     previousPeriodFilteredContacts.forEach(contact => {
       const origin = contact.origemcontacto || 'Desconhecida';
       counts[origin] = (counts[origin] || 0) + 1;
     });
     return counts;
-  }, [previousPeriodFilteredContacts]);
+  }, [previousPeriodFilteredContacts, selectedPeriod]);
 
   const filteredContactsCount = useMemo(() => {
     return filteredContacts.length;
@@ -127,7 +130,7 @@ const Dashboard = () => {
   }, [filteredContacts]);
 
   const previousPeriodContactsCount = useMemo(() => {
-    if (!contacts) return 0;
+    if (!contacts || selectedPeriod === "all") return 0; // No previous period comparison for "all"
     const now = new Date();
     const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
     return contacts.filter((contact) => {
@@ -153,6 +156,8 @@ const Dashboard = () => {
         return "Este Mês";
       case "year":
         return "Este Ano";
+      case "all":
+        return "Todos";
       default:
         return "";
     }
@@ -168,6 +173,8 @@ const Dashboard = () => {
         return "Mês Anterior";
       case "year":
         return "Ano Anterior";
+      case "all":
+        return "N/A"; // No meaningful previous period for "all"
       default:
         return "";
     }
@@ -251,11 +258,10 @@ const Dashboard = () => {
           Ano
         </Button>
         <Button
-          variant="outline"
-          onClick={() => navigate("/contacts")} // Button to navigate to ContactsPage
-          className="ml-auto" // Push button to the right
+          variant={selectedPeriod === "all" ? "default" : "outline"}
+          onClick={() => setSelectedPeriod("all")}
         >
-          <Users className="h-4 w-4 mr-2" /> Ver Todos os Contactos
+          Todos
         </Button>
       </div>
 
@@ -265,8 +271,8 @@ const Dashboard = () => {
             <CardTitle className="text-sm font-medium">
               Contactos
             </CardTitle>
-            <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center"> {/* Wrapper para o ícone redondo */}
-              <Users className="h-4 w-4 text-primary" /> {/* Ícone com cor primária */}
+            <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
+              <Users className="h-4 w-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
@@ -274,10 +280,17 @@ const Dashboard = () => {
             <p className="text-xs text-muted-foreground">
               Ativos: {activeContactsCount}
             </p>
-            <p className={cn("text-xs flex items-center", getTrendTextColor(filteredContactsCount, previousPeriodContactsCount))}>
-              {getPreviousPeriodLabel(selectedPeriod)}: {previousPeriodContactsCount}
-              {getTrendIcon(filteredContactsCount, previousPeriodContactsCount)}
-            </p>
+            {selectedPeriod !== "all" && ( // Only show previous period comparison if not "all"
+              <p className={cn("text-xs flex items-center", getTrendTextColor(filteredContactsCount, previousPeriodContactsCount))}>
+                {getPreviousPeriodLabel(selectedPeriod)}: {previousPeriodContactsCount}
+                {getTrendIcon(filteredContactsCount, previousPeriodContactsCount)}
+              </p>
+            )}
+            {selectedPeriod === "all" && (
+              <p className="text-xs text-muted-foreground">
+                {getPreviousPeriodLabel(selectedPeriod)}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
