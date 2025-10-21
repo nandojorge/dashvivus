@@ -18,8 +18,7 @@ import {
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog"; // Importar Dialog e DialogTrigger
-import { ActiveContactsDialog } from "@/components/ActiveContactsDialog"; // Importar o novo componente
+// Removidos os imports de Dialog, DialogTrigger, etc., pois o diálogo foi substituído por um novo cartão.
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all";
 
@@ -74,7 +73,6 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
-  // Removido o estado isAlertDialogOpen, pois o Dialog do shadcn/ui gerencia seu próprio estado de abertura/fechamento
 
   const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
@@ -265,10 +263,11 @@ const Dashboard = () => {
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-2">
+        {/* Cartão de Contactos */}
         <Card className="min-w-[280px] flex-shrink-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Contactos
+              Total de Contactos
             </CardTitle>
             <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
               <Users className="h-4 w-4 text-foreground" />
@@ -290,14 +289,24 @@ const Dashboard = () => {
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
-            <Dialog> {/* O Dialog agora envolve o Trigger e o Content */}
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="mt-2 w-full">
-                  Ver Ativos
-                </Button>
-              </DialogTrigger>
-              <ActiveContactsDialog activeCount={activeContactsCount} />
-            </Dialog>
+          </CardContent>
+        </Card>
+
+        {/* Novo Cartão de Contactos Ativos */}
+        <Card className="min-w-[280px] flex-shrink-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Contactos Ativos
+            </CardTitle>
+            <div className="rounded-full bg-green-500/10 p-2 flex items-center justify-center">
+              <Users className="h-4 w-4 text-green-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeContactsCount}</div>
+            <p className="text-xs text-muted-foreground">
+              Contactos não arquivados
+            </p>
           </CardContent>
         </Card>
       </div>
