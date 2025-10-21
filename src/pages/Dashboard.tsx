@@ -126,7 +126,7 @@ const Dashboard = () => {
     return processContactsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start, end }));
   }, [contacts, selectedPeriod]);
 
-  // Calculate origin counts for previous period
+  // Calculate origin counts for previous period (this is now redundant for the chart, but kept for other cards if needed)
   const previousPeriodOriginCounts = useMemo(() => {
     if (selectedPeriod === "all") return {};
     const counts: { [key: string]: number } = {};
@@ -404,7 +404,7 @@ const Dashboard = () => {
       {/* Contact Origin Bar Chart - apenas com contactos */}
       <ContactOriginBarChart
         contacts={filteredContacts}
-        previousPeriodOriginCounts={previousPeriodOriginCounts}
+        previousPeriodFilteredContacts={previousPeriodFilteredContacts} // Passar contactos filtrados do período anterior
       />
     </div>
   );

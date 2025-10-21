@@ -1,35 +1,56 @@
 "use client";
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts'; // Adicionado LabelList
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Contact } from '@/types/contact';
 
 interface ContactOriginBarChartProps {
-  contacts: Contact[];
-  previousPeriodOriginCounts: { [key: string]: number };
+  contacts: Contact[]; // Contactos do período atual
+  previousPeriodFilteredContacts: Contact[]; // Contactos do período anterior
 }
 
-const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts, previousPeriodOriginCounts }) => {
+const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts, previousPeriodFilteredContacts }) => {
   const data = React.useMemo(() => {
-    const currentOriginCounts: { [key: string]: number } = {};
-    const allOrigins = new Set<string>();
+    const processContacts = (contactList: Contact[]) => {
+      const originCounts: { [key: string]: number } = {};
+      const convertedCounts: { [key: string]: number } = {};
+      contactList.forEach(contact => {
+        const origin = contact.origemcontacto || 'desconhecida';
+        originCounts[origin] = (originCounts[origin] || 0) + 1;
+        if (contact.status === "Convertido") {
+          convertedCounts[origin] = (convertedCounts[origin] || 0) + 1;
+        }
+      });
+      return { originCounts, convertedCounts };
+    };
 
-    contacts.forEach(contact => {
-      const origin = contact.origemcontacto || 'desconhecida'; // Ensure 'desconhecida' is lowercase
-      currentOriginCounts[origin] = (currentOriginCounts[origin] || 0) + 1;
-      allOrigins.add(origin);
+    const { originCounts: currentOriginCounts, convertedCounts: currentConvertedCounts } = processContacts(contacts);
+    const { originCounts: prevOriginCounts, convertedCounts: prevConvertedCounts } = processContacts(previousPeriodFilteredContacts);
+
+    const allOrigins = new Set<string>([
+      ...Object.keys(currentOriginCounts),
+      ...Object.keys(prevOriginCounts),
+    ]);
+
+    return Array.from(allOrigins).map(origin => {
+      const currentTotal = currentOriginCounts[origin] || 0;
+      const currentConverted = currentConvertedCounts[origin] || 0;
+      const currentConversionRate = currentTotal > 0 ? (currentConverted / currentTotal) * 100 : 0;
+
+      const previousTotal = prevOriginCounts[origin] || 0;
+      const previousConverted = prevConvertedCounts[origin] || 0;
+      const previousConversionRate = previousTotal > 0 ? (previousConverted / previousTotal) * 100 : 0;
+
+      return {
+        name: origin,
+        currentValue: currentTotal,
+        currentConversionRate: currentConversionRate,
+        previousValue: previousTotal,
+        previousConversionRate: previousConversionRate,
+      };
     });
-
-    // Add origins from previous period that might not be in current period
-    Object.keys(previousPeriodOriginCounts).forEach(origin => allOrigins.add(origin));
-
-    return Array.from(allOrigins).map(origin => ({
-      name: origin,
-      currentValue: currentOriginCounts[origin] || 0,
-      previousValue: previousPeriodOriginCounts[origin] || 0,
-    }));
-  }, [contacts, previousPeriodOriginCounts]);
+  }, [contacts, previousPeriodFilteredContacts]);
 
   // Helper function to capitalize the first letter of a string
   const capitalizeFirstLetter = (string: string) => {
@@ -37,13 +58,36 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
+  // Custom label formatter for BarChart to display count and percentage
+  const renderCustomizedLabel = (props: any) => {
+    const { x, y, width, height, value, dataKey } = props;
+    const isCurrent = dataKey === 'currentValue';
+    const conversionRate = isCurrent ? props.payload.currentConversionRate : props.payload.previousConversionRate;
+
+    if (value === 0) return null; // Don't show label for zero values
+
+    // Position the label slightly to the right of the bar
+    const offset = 5;
+    return (
+      <text
+        x={x + width + offset}
+        y={y + height / 2}
+        fill="hsl(var(--foreground))"
+        textAnchor="start"
+        dominantBaseline="middle"
+        className="text-xs"
+      >
+        {`${value} (${conversionRate.toFixed(1)}%)`}
+      </text>
+    );
+  };
+
   // Calculate dynamic height for the chart based on number of bars
-  // Each category (with two bars) needs about 45px height, plus some padding for top/bottom and legend
-  const minCategoryHeight = 45; // Increased from 35 to 45 for more spacing between categories
-  const baseChartPadding = 100; // Space for title, legend, and chart margins
+  const minCategoryHeight = 45;
+  const baseChartPadding = 100;
   const dynamicChartHeight = data.length > 0
     ? Math.max(150, data.length * minCategoryHeight + baseChartPadding)
-    : 150; // Minimum height of 150px when no data
+    : 150;
 
   return (
     <Card className="col-span-full">
@@ -58,11 +102,11 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
               data={data}
               margin={{
                 top: 20,
-                right: 30,
-                left: 80, // Increased left margin for Y-axis labels
+                right: 100, // Increased right margin to accommodate labels
+                left: 80,
                 bottom: 5,
               }}
-              barGap={2} // Reduz o espaçamento entre as barras do mesmo grupo
+              barGap={2}
             >
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis type="number" tickLine={false} axisLine={false} className="text-sm" />
@@ -74,7 +118,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
                 className="text-sm"
                 width={70}
                 interval={0}
-                tickFormatter={capitalizeFirstLetter} // Apply formatter here
+                tickFormatter={capitalizeFirstLetter}
               />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
@@ -85,13 +129,17 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
                 }}
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
                 itemStyle={{ color: 'hsl(var(--foreground))' }}
-                formatter={(value: number, name: string) => {
-                  if (name === "Contactos Atuais" || name === "Período Anterior") {
-                    return [value, name];
+                formatter={(value: number, name: string, props: any) => {
+                  const dataKey = props.dataKey;
+                  let conversionRate = 0;
+                  if (dataKey === 'currentValue') {
+                    conversionRate = props.payload.currentConversionRate;
+                  } else if (dataKey === 'previousValue') {
+                    conversionRate = props.payload.previousConversionRate;
                   }
-                  return value;
+                  return [`${value} (${conversionRate.toFixed(1)}%)`, name];
                 }}
-                labelFormatter={(label: string) => capitalizeFirstLetter(label)} // Also format tooltip label
+                labelFormatter={(label: string) => capitalizeFirstLetter(label)}
               />
               <Legend
                 formatter={(value) => {
@@ -101,8 +149,12 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
                   return value;
                 }}
               />
-              <Bar dataKey="currentValue" name="Contactos Atuais" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={16} />
-              <Bar dataKey="previousValue" name="Período Anterior" fill="hsl(var(--secondary-darker))" radius={[0, 4, 4, 0]} barSize={16} />
+              <Bar dataKey="currentValue" name="Contactos Atuais" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={16}>
+                <LabelList dataKey="currentValue" content={renderCustomizedLabel} />
+              </Bar>
+              <Bar dataKey="previousValue" name="Período Anterior" fill="hsl(var(--secondary-darker))" radius={[0, 4, 4, 0]} barSize={16}>
+                <LabelList dataKey="previousValue" content={renderCustomizedLabel} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         ) : (
