@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Users, TrendingUp, TrendingDown } from "lucide-react"; // Removed UserPlus for leads
+import { Terminal, Users, TrendingUp, TrendingDown, CheckCircle } from "lucide-react"; // Adicionado CheckCircle para 'Convertidos'
 import {
   isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
   subDays, subWeeks, subMonths, subYears,
@@ -98,15 +98,20 @@ const Dashboard = () => {
         return false;
       }
       return periodFilterFn(itemDate);
-    }).map(contact => {
+    }).map((contact, index) => { // Adicionado 'index' para a lógica de mock
       let assignedOrigin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : ''; // Normalize to lowercase
       if (!assignedOrigin) {
         assignedOrigin = origins[Math.floor(Math.random() * origins.length)]; // Assign mock origin (already lowercase)
         // console.warn(`Item ${contact.id} (${contact.nome}) has no 'origemcontacto'. Assigning mock origin: ${assignedOrigin}`);
       }
+
+      // Lógica de mock temporária para o status "Convertido"
+      const mockStatus = (index % 5 === 0) ? "Convertido" : contact.status; // A cada 5º contacto é "Convertido"
+
       return {
         ...contact,
-        origemcontacto: assignedOrigin
+        origemcontacto: assignedOrigin,
+        status: mockStatus, // Atribui o status mockado
       };
     });
   };
@@ -142,6 +147,10 @@ const Dashboard = () => {
     return filteredContacts.filter(contact => contact.arquivado === "nao").length;
   }, [filteredContacts]);
 
+  const convertedContactsCount = useMemo(() => {
+    return filteredContacts.filter(contact => contact.status === "Convertido").length;
+  }, [filteredContacts]);
+
   const previousPeriodContactsCount = useMemo(() => {
     if (!contacts || selectedPeriod === "all") return 0;
     const now = new Date();
@@ -150,6 +159,18 @@ const Dashboard = () => {
       if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
       const contactDate = parseISO(contact.dataregisto);
       return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
+    }).length;
+  }, [contacts, selectedPeriod]);
+
+  const previousPeriodConvertedContactsCount = useMemo(() => {
+    if (!contacts || selectedPeriod === "all") return 0;
+    const now = new Date();
+    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
+    return contacts.filter((contact, index) => { // Usar index para o mock
+      if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
+      const contactDate = parseISO(contact.dataregisto);
+      const mockStatus = (index % 5 === 0) ? "Convertido" : contact.status; // Aplicar o mesmo mock
+      return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end }) && mockStatus === "Convertido";
     }).length;
   }, [contacts, selectedPeriod]);
 
@@ -303,9 +324,41 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Novo Cartão para Convertidos */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Convertidos
+            </CardTitle>
+            <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
+              <CheckCircle className="h-4 w-4 text-foreground" /> {/* Ícone para Convertidos */}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{convertedContactsCount}</div>
+            <p className="text-xs text-muted-foreground">
+              Contactos com status "Convertido"
+            </p>
+            {selectedPeriod !== "all" && (
+              <p className="text-xs flex items-center">
+                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("ml-1", getTrendTextColor(convertedContactsCount, previousPeriodConvertedContactsCount))}>
+                  {previousPeriodConvertedContactsCount}
+                </span>
+                {getTrendIcon(convertedContactsCount, previousPeriodConvertedContactsCount)}
+              </p>
+            )}
+            {selectedPeriod === "all" && (
+              <p className="text-xs text-muted-foreground">
+                {getPreviousPeriodLabel(selectedPeriod)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Contact Origin Bar Chart - agora apenas com contactos */}
+      {/* Contact Origin Bar Chart - apenas com contactos */}
       <ContactOriginBarChart
         contacts={filteredContacts} // Passar apenas contactos para o gráfico de origem
         previousPeriodOriginCounts={previousPeriodOriginCounts}
