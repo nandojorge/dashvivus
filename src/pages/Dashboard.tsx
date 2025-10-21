@@ -18,8 +18,8 @@ import {
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
 import { cn } from "@/lib/utils";
-import { DialogTrigger } from "@/components/ui/dialog"; // Importar DialogTrigger
-import { ActiveContactsDialog } from "@/components/ActiveContactsDialog"; // Importar o novo componente
+import { Dialog, DialogTrigger } from "@/components/ui/dialog"; // Importar Dialog e DialogTrigger
+import { ActiveContactsDialogContent } from "@/components/ActiveContactsDialogContent"; // Importar o novo componente de conteúdo
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all";
 
@@ -74,7 +74,6 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
-  const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false); // Estado para controlar o diálogo
 
   const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
@@ -290,11 +289,14 @@ const Dashboard = () => {
                 {getPreviousPeriodLabel(selectedPeriod)}
               </p>
             )}
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => setIsAlertDialogOpen(true)}>
-                Ver Ativos
-              </Button>
-            </DialogTrigger>
+            <Dialog> {/* O Dialog agora envolve o Trigger e o Content */}
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="mt-2 w-full">
+                  Ver Ativos
+                </Button>
+              </DialogTrigger>
+              <ActiveContactsDialogContent activeCount={activeContactsCount} />
+            </Dialog>
           </CardContent>
         </Card>
       </div>
@@ -303,13 +305,6 @@ const Dashboard = () => {
       <ContactOriginBarChart
         contacts={filteredContacts}
         previousPeriodFilteredContacts={previousPeriodFilteredContacts}
-      />
-
-      {/* Diálogo para Contactos Ativos */}
-      <ActiveContactsDialog
-        activeCount={activeContactsCount}
-        isOpen={isAlertDialogOpen}
-        onOpenChange={setIsAlertDialogOpen}
       />
     </div>
   );
