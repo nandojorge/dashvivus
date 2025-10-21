@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts'; // Adicionado LabelList
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Contact } from '@/types/contact';
 
@@ -60,11 +60,15 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
 
   // Custom label formatter for BarChart to display count and percentage
   const renderCustomizedLabel = (props: any) => {
-    const { x, y, width, height, value, dataKey } = props;
-    const isCurrent = dataKey === 'currentValue';
-    const conversionRate = isCurrent ? props.payload.currentConversionRate : props.payload.previousConversionRate;
+    const { x, y, width, height, value, dataKey, payload } = props; // Destructure payload
 
-    if (value === 0) return null; // Don't show label for zero values
+    // Se o valor for 0 ou o payload for indefinido, não renderizar o label
+    if (value === 0 || !payload) {
+      return null;
+    }
+
+    const isCurrent = dataKey === 'currentValue';
+    const conversionRate = isCurrent ? payload.currentConversionRate : payload.previousConversionRate;
 
     // Position the label slightly to the right of the bar
     const offset = 5;
