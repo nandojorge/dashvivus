@@ -78,7 +78,8 @@ const Dashboard = () => {
     queryFn: getContacts,
   });
 
-  const origins = ["Website", "Referral", "Social Media", "Email Marketing", "Direct"]; // Define origins once
+  // Define origins in lowercase for consistency
+  const origins = ["website", "referral", "social media", "email marketing", "direct"];
 
   const processContactsForPeriod = (allContacts: Contact[] | undefined, periodFilterFn: (contactDate: Date) => boolean) => {
     if (!allContacts) return [];
@@ -93,9 +94,9 @@ const Dashboard = () => {
       }
       return periodFilterFn(contactDate);
     }).map(contact => {
-      let assignedOrigin = contact.origemcontacto;
+      let assignedOrigin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : ''; // Normalize to lowercase
       if (!assignedOrigin) {
-        assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
+        assignedOrigin = origins[Math.floor(Math.random() * origins.length)]; // Assign mock origin (already lowercase)
         console.warn(`Contact ${contact.id} (${contact.nome}) has no 'origemcontacto'. Assigning mock origin: ${assignedOrigin}`);
       }
       return {
@@ -122,7 +123,8 @@ const Dashboard = () => {
     if (selectedPeriod === "all") return {}; // No previous period comparison for "all"
     const counts: { [key: string]: number } = {};
     previousPeriodFilteredContacts.forEach(contact => {
-      const origin = contact.origemcontacto || 'Desconhecida';
+      // Use the normalized origin directly
+      const origin = contact.origemcontacto || 'desconhecida'; // Ensure 'desconhecida' is also lowercase
       counts[origin] = (counts[origin] || 0) + 1;
     });
     return counts;
