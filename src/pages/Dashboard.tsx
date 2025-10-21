@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Users, TrendingUp, TrendingDown } from "lucide-react"; // Importar TrendingUp e TrendingDown
+import { Terminal, Users, TrendingUp, TrendingDown } from "lucide-react";
 import {
   isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
   subDays, subWeeks, subMonths, subYears,
@@ -17,6 +17,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
+import { cn } from "@/lib/utils"; // Importar cn para combinar classes Tailwind
 
 type FilterPeriod = "today" | "week" | "month" | "year";
 
@@ -179,6 +180,15 @@ const Dashboard = () => {
     return null;
   };
 
+  const getTrendTextColor = (currentValue: number, previousValue: number) => {
+    if (currentValue > previousValue) {
+      return "text-green-500";
+    } else if (currentValue < previousValue) {
+      return "text-red-500";
+    }
+    return "text-muted-foreground"; // Cor padrão se não houver alteração
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
@@ -253,7 +263,7 @@ const Dashboard = () => {
             <p className="text-xs text-muted-foreground">
               Ativos: {activeContactsCount}
             </p>
-            <p className="text-xs text-muted-foreground flex items-center"> {/* Adicionado flex e items-center */}
+            <p className={cn("text-xs flex items-center", getTrendTextColor(filteredContactsCount, previousPeriodContactsCount))}>
               {getPreviousPeriodLabel(selectedPeriod)}: {previousPeriodContactsCount}
               {getTrendIcon(filteredContactsCount, previousPeriodContactsCount)}
             </p>
