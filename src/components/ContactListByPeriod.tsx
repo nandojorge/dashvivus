@@ -43,7 +43,7 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({
       return Object.keys(dailyGroups)
         .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
         .map((dayKey) => ({
-          label: format(parseISO(dayKey), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
+          label: format(parseISO(dayKey), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }), // Alterado aqui
           contacts: dailyGroups[dayKey], // Keep contacts array for count
         }));
     } else {
