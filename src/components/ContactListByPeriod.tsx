@@ -44,7 +44,7 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({
         .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
         .map((dayKey) => ({
           label: format(parseISO(dayKey), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
-          contacts: dailyGroups[dayKey],
+          contacts: dailyGroups[dayKey], // Keep contacts array for count
         }));
     } else {
       // Existing logic for other periods, with improved sorting
@@ -128,13 +128,7 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({
                 <h3 className="text-lg font-semibold mb-2">
                   {group.label} ({group.contacts.length})
                 </h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {group.contacts.map((contact) => (
-                    <li key={contact.id} className="text-sm text-muted-foreground">
-                      {contact.nome} - {contact.email}
-                    </li>
-                  ))}
-                </ul>
+                {/* Removida a lista detalhada de contactos */}
                 {index < groupedContacts.length - 1 && <Separator className="my-4" />}
               </div>
             ))}
