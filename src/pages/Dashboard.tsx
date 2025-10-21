@@ -17,7 +17,6 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
-import ConversionRateByOriginChart from "@/components/charts/ConversionRateByOriginChart"; // Importar o novo componente
 import ContactListByPeriod from "@/components/ContactListByPeriod";
 import { cn } from "@/lib/utils";
 
@@ -321,12 +320,6 @@ const Dashboard = () => {
 
       {/* Contact Origin Bar Chart */}
       <ContactOriginBarChart
-        contacts={filteredContacts}
-        previousPeriodFilteredContacts={previousPeriodFilteredContacts}
-      />
-
-      {/* Conversion Rate By Origin Chart */}
-      <ConversionRateByOriginChart
         contacts={filteredContacts}
         previousPeriodFilteredContacts={previousPeriodFilteredContacts}
       />
