@@ -5,7 +5,14 @@ import { Contact } from "@/types/contact";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, parseISO, startOfWeek, startOfMonth, startOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all";
 
@@ -43,7 +50,7 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({
       return Object.keys(dailyGroups)
         .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
         .map((dayKey) => ({
-          label: format(parseISO(dayKey), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }), // Alterado aqui
+          label: format(parseISO(dayKey), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
           contacts: dailyGroups[dayKey], // Keep contacts array for count
         }));
     } else {
@@ -122,16 +129,23 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({
       </CardHeader>
       <CardContent className="p-4">
         {groupedContacts.length > 0 ? (
-          <div className="space-y-4">
-            {groupedContacts.map((group, index) => (
-              <div key={group.label}>
-                <h3 className="text-lg font-semibold mb-2">
-                  {group.label} ({group.contacts.length})
-                </h3>
-                {/* Removida a lista detalhada de contactos */}
-                {index < groupedContacts.length - 1 && <Separator className="my-4" />}
-              </div>
-            ))}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead className="text-right">Nº de Contactos</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {groupedContacts.map((group) => (
+                  <TableRow key={group.label}>
+                    <TableCell className="font-medium">{group.label}</TableCell>
+                    <TableCell className="text-right">{group.contacts.length}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         ) : (
           <p className="text-muted-foreground">Nenhum contacto encontrado para este período.</p>
