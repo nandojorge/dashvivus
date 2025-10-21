@@ -210,7 +210,7 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold">Dashboard do CRM</h1>
+        <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
         <Card>
           <CardHeader>
             <CardTitle>Carregando Dados...</CardTitle>
@@ -226,7 +226,7 @@ const Dashboard = () => {
   if (isError) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold">Dashboard do CRM</h1>
+        <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
         <Alert variant="destructive">
           <Terminal className="h-4 w-4" />
           <AlertTitle>Erro</AlertTitle>
@@ -240,7 +240,7 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold">Dashboard do CRM</h1>
+      <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
       <div className="flex gap-2 mb-4">
         <Button
           variant={selectedPeriod === "today" ? "default" : "outline"}
