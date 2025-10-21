@@ -256,7 +256,9 @@ const Dashboard = () => {
             <CardTitle className="text-sm font-medium">
               Contactos
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center"> {/* Wrapper para o ícone redondo */}
+              <Users className="h-4 w-4 text-primary" /> {/* Ícone com cor primária */}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{filteredContactsCount}</div>
