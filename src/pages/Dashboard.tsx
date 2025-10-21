@@ -92,10 +92,17 @@ const Dashboard = () => {
         return false;
       }
       return periodFilterFn(contactDate);
-    }).map(contact => ({
-      ...contact,
-      origemcontacto: contact.origemcontacto || origins[Math.floor(Math.random() * origins.length)] // Mock origin if not present
-    }));
+    }).map(contact => {
+      let assignedOrigin = contact.origemcontacto;
+      if (!assignedOrigin) {
+        assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
+        console.warn(`Contact ${contact.id} (${contact.nome}) has no 'origemcontacto'. Assigning mock origin: ${assignedOrigin}`);
+      }
+      return {
+        ...contact,
+        origemcontacto: assignedOrigin
+      };
+    });
   };
 
   const filteredContacts = useMemo(() => {
