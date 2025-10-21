@@ -5,10 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Contact } from '@/types/contact';
 import {
   format,
-  isSameDay,
-  isSameWeek,
-  isSameMonth,
-  isSameYear,
   parseISO,
   startOfWeek,
   endOfWeek,
@@ -39,45 +35,46 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({ contacts, sel
 
       switch (selectedPeriod) {
         case "today":
+        case "week": // Para 'today' e 'week', agrupar por dia
           key = format(contactDate, 'yyyy-MM-dd');
           label = format(contactDate, 'dd MMMM yyyy', { locale: ptBR });
           break;
-        case "week":
+        case "month": // Para 'month', agrupar por semana
           const weekStart = startOfWeek(contactDate, { weekStartsOn: 0, locale: ptBR });
           const weekEnd = endOfWeek(contactDate, { weekStartsOn: 0, locale: ptBR });
-          key = format(weekStart, 'yyyy-MM-dd'); // Use start of week as key
+          key = format(weekStart, 'yyyy-MM-dd'); // Usar o início da semana como chave
           label = `Semana ${format(weekStart, 'w', { locale: ptBR })} (${format(weekStart, 'dd MMM', { locale: ptBR })} - ${format(weekEnd, 'dd MMM', { locale: ptBR })})`;
           break;
-        case "month":
+        case "year": // Para 'year', agrupar por mês
           key = format(contactDate, 'yyyy-MM');
           label = format(contactDate, 'MMMM yyyy', { locale: ptBR });
           break;
-        case "year":
+        case "all": // Para 'all', agrupar por ano
+        default:
           key = format(contactDate, 'yyyy');
           label = format(contactDate, 'yyyy', { locale: ptBR });
-          break;
-        case "all":
-        default:
-          key = "all";
-          label = "Todos os Contactos";
           break;
       }
 
       if (!groups[key]) {
         groups[key] = [];
       }
-      groups[key].push({ ...contact, _periodLabel: label }); // Add label for display
+      groups[key].push({ ...contact, _periodLabel: label }); // Adicionar label para exibição
     });
 
     // Sort groups by date (descending)
     const sortedKeys = Object.keys(groups).sort((a, b) => {
-      if (selectedPeriod === "all") return 0; // No specific sorting for 'all'
+      // For 'all' period, sort by year descending
+      if (selectedPeriod === "all") {
+        return parseInt(b) - parseInt(a);
+      }
+      // For other periods, sort by date key descending
       return parseISO(b).getTime() - parseISO(a).getTime();
     });
 
     return sortedKeys.map(key => ({
       periodKey: key,
-      periodLabel: groups[key][0]?._periodLabel || key, // Use the stored label
+      periodLabel: groups[key][0]?._periodLabel || key, // Usar o label armazenado
       contacts: groups[key],
       count: groups[key].length,
     }));
@@ -86,15 +83,15 @@ const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({ contacts, sel
   const getTitle = () => {
     switch (selectedPeriod) {
       case "today":
-        return "Contactos de Hoje";
+        return "Contactos de Hoje (por Dia)";
       case "week":
-        return "Contactos por Semana";
+        return "Contactos desta Semana (por Dia)";
       case "month":
-        return "Contactos por Mês";
+        return "Contactos deste Mês (por Semana)";
       case "year":
-        return "Contactos por Ano";
+        return "Contactos deste Ano (por Mês)";
       case "all":
-        return "Todos os Contactos";
+        return "Todos os Contactos (por Ano)";
       default:
         return "Lista de Contactos";
     }
