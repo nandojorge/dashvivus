@@ -143,8 +143,6 @@ const Dashboard = () => {
     }).length;
   }, [contacts, selectedPeriod]);
 
-  // Removed additionalPastDailyCounts as per user request.
-
   const getPeriodLabel = (period: FilterPeriod) => {
     switch (period) {
       case "today":
@@ -328,7 +326,7 @@ const Dashboard = () => {
 
       {/* Contact List By Period */}
       <ContactListByPeriod
-        contacts={filteredContacts}
+        contacts={selectedPeriod === "today" ? (contacts || []) : filteredContacts}
         selectedPeriod={selectedPeriod}
       />
     </div>

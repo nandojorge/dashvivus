@@ -1,131 +1,146 @@
 "use client";
 
-import React from 'react';
+import React, { useMemo } from "react";
+import { Contact } from "@/types/contact";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Contact } from '@/types/contact';
-import {
-  format,
-  parseISO,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  startOfYear,
-  endOfYear,
-} from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Separator } from '@/components/ui/separator';
+import { format, parseISO, startOfWeek, startOfMonth, startOfYear } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Separator } from "@/components/ui/separator";
+
+type FilterPeriod = "today" | "week" | "month" | "year" | "all";
 
 interface ContactListByPeriodProps {
   contacts: Contact[];
-  selectedPeriod: "today" | "week" | "month" | "year" | "all";
+  selectedPeriod: FilterPeriod;
 }
 
-const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({ contacts, selectedPeriod }) => {
-  const groupedContacts = React.useMemo(() => {
-    const groups: { [key: string]: Contact[] } = {};
+const ContactListByPeriod: React.FC<ContactListByPeriodProps> = ({
+  contacts,
+  selectedPeriod,
+}) => {
+  const groupedContacts = useMemo(() => {
+    if (!contacts || contacts.length === 0) {
+      return [];
+    }
 
-    contacts.forEach(contact => {
-      if (!contact.dataregisto) return;
+    // Special handling for "today" to show all historical days with contacts
+    if (selectedPeriod === "today") {
+      const dailyGroups: { [key: string]: Contact[] } = {};
+      contacts.forEach((contact) => {
+        if (contact.dataregisto) {
+          const date = parseISO(contact.dataregisto);
+          if (!isNaN(date.getTime())) {
+            const dayKey = format(date, "yyyy-MM-dd"); // Group by day
+            if (!dailyGroups[dayKey]) {
+              dailyGroups[dayKey] = [];
+            }
+            dailyGroups[dayKey].push(contact);
+          }
+        }
+      });
 
-      const contactDate = parseISO(contact.dataregisto);
-      if (isNaN(contactDate.getTime())) {
-        console.warn(`Invalid date string for contact ${contact.id}: ${contact.dataregisto}`);
-        return;
-      }
+      // Convert to array of groups, sorted by date descending
+      return Object.keys(dailyGroups)
+        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+        .map((dayKey) => ({
+          label: format(parseISO(dayKey), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
+          contacts: dailyGroups[dayKey],
+        }));
+    } else {
+      // Existing logic for other periods, with improved sorting
+      const groupedByDate: { [key: string]: { date: Date; contacts: Contact[] } } = {};
 
-      let key: string;
-      let label: string;
+      contacts.forEach((contact) => {
+        if (contact.dataregisto) {
+          const contactDate = parseISO(contact.dataregisto);
+          if (!isNaN(contactDate.getTime())) {
+            let groupStartDate: Date;
+            let groupKey: string;
 
-      switch (selectedPeriod) {
-        case "today": // Agrupar por dia
-          key = format(contactDate, 'yyyy-MM-dd');
-          label = format(contactDate, 'dd MMMM yyyy', { locale: ptBR });
-          break;
-        case "week": // Agrupar por semana
-          const weekStart = startOfWeek(contactDate, { weekStartsOn: 0, locale: ptBR });
-          const weekEnd = endOfWeek(contactDate, { weekStartsOn: 0, locale: ptBR });
-          key = format(weekStart, 'yyyy-MM-dd'); // Usar o início da semana como chave
-          label = `Semana ${format(weekStart, 'w', { locale: ptBR })} (${format(weekStart, 'dd MMM', { locale: ptBR })} - ${format(weekEnd, 'dd MMM', { locale: ptBR })})`;
-          break;
-        case "month": // Agrupar por mês
-          key = format(contactDate, 'yyyy-MM');
-          label = format(contactDate, 'MMMM yyyy', { locale: ptBR });
-          break;
-        case "year": // Agrupar por ano
-          key = format(contactDate, 'yyyy');
-          label = format(contactDate, 'yyyy', { locale: ptBR });
-          break;
-        case "all": // Agrupar por ano para "Todos"
-        default:
-          key = format(contactDate, 'yyyy');
-          label = format(contactDate, 'yyyy', { locale: ptBR });
-          break;
-      }
+            switch (selectedPeriod) {
+              case "week":
+                groupStartDate = startOfWeek(contactDate, { weekStartsOn: 0, locale: ptBR });
+                groupKey = format(groupStartDate, "yyyy-MM-dd"); // Use sortable key
+                break;
+              case "month":
+                groupStartDate = startOfMonth(contactDate);
+                groupKey = format(groupStartDate, "yyyy-MM"); // Use sortable key
+                break;
+              case "year":
+              case "all": // Group by year for "all"
+                groupStartDate = startOfYear(contactDate);
+                groupKey = format(groupStartDate, "yyyy"); // Use sortable key
+                break;
+              default:
+                groupStartDate = contactDate; // Fallback
+                groupKey = format(contactDate, "yyyy-MM-dd");
+            }
 
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-      groups[key].push({ ...contact, _periodLabel: label }); // Adicionar label para exibição
-    });
+            if (!groupedByDate[groupKey]) {
+              groupedByDate[groupKey] = { date: groupStartDate, contacts: [] };
+            }
+            groupedByDate[groupKey].contacts.push(contact);
+          }
+        }
+      });
 
-    // Sort groups by date (descending)
-    const sortedKeys = Object.keys(groups).sort((a, b) => {
-      // For 'all' period, sort by year descending
-      if (selectedPeriod === "all" || selectedPeriod === "year") {
-        return parseInt(b) - parseInt(a);
-      }
-      // For other periods, sort by date key descending
-      return parseISO(b).getTime() - parseISO(a).getTime();
-    });
-
-    return sortedKeys.map(key => ({
-      periodKey: key,
-      periodLabel: groups[key][0]?._periodLabel || key, // Usar o label armazenado
-      contacts: groups[key],
-      count: groups[key].length,
-    }));
+      // Convert to array of groups, sorted by date descending
+      return Object.keys(groupedByDate)
+        .sort((a, b) => groupedByDate[b].date.getTime() - groupedByDate[a].date.getTime())
+        .map((key) => {
+          let label: string;
+          switch (selectedPeriod) {
+            case "week":
+              label = format(groupedByDate[key].date, "dd 'de' MMM", { locale: ptBR });
+              break;
+            case "month":
+              label = format(groupedByDate[key].date, "MMMM 'de' yyyy", { locale: ptBR });
+              break;
+            case "year":
+            case "all":
+              label = format(groupedByDate[key].date, "yyyy", { locale: ptBR });
+              break;
+            default:
+              label = key;
+          }
+          return {
+            label: label,
+            contacts: groupedByDate[key].contacts,
+          };
+        });
+    }
   }, [contacts, selectedPeriod]);
 
-  const getTitle = () => {
-    switch (selectedPeriod) {
-      case "today":
-        return "Contactos de Hoje";
-      case "week":
-        return "Contactos desta Semana";
-      case "month":
-        return "Contactos deste Mês";
-      case "year":
-        return "Contactos deste Ano";
-      case "all":
-        return "Todos os Contactos (por Ano)";
-      default:
-        return "Lista de Contactos";
-    }
-  };
-
   return (
-    <Card className="col-span-full">
+    <Card>
       <CardHeader>
-        <CardTitle>{getTitle()}</CardTitle>
+        <CardTitle>
+          {selectedPeriod === "today"
+            ? "Contactos por Dia (Histórico)"
+            : `Contactos (${groupedContacts.length} grupos)`}
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
         {groupedContacts.length > 0 ? (
           <div className="space-y-4">
             {groupedContacts.map((group, index) => (
-              <React.Fragment key={group.periodKey}>
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-foreground">{group.periodLabel}</span>
-                  <span className="text-muted-foreground">{group.count} contactos</span>
-                </div>
-                {index < groupedContacts.length - 1 && <Separator />}
-              </React.Fragment>
+              <div key={group.label}>
+                <h3 className="text-lg font-semibold mb-2">
+                  {group.label} ({group.contacts.length})
+                </h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  {group.contacts.map((contact) => (
+                    <li key={contact.id} className="text-sm text-muted-foreground">
+                      {contact.nome} - {contact.email}
+                    </li>
+                  ))}
+                </ul>
+                {index < groupedContacts.length - 1 && <Separator className="my-4" />}
+              </div>
             ))}
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            Nenhum contacto registado neste período.
-          </div>
+          <p className="text-muted-foreground">Nenhum contacto encontrado para este período.</p>
         )}
       </CardContent>
     </Card>
