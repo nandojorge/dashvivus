@@ -18,14 +18,8 @@ import {
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
 import { cn } from "@/lib/utils";
-import {
-  Dialog, // Importar Dialog
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger // Importar DialogTrigger
-} from "@/components/ui/dialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog"; // Importar Dialog e DialogTrigger
+import { ActiveContactsDialog } from "@/components/ActiveContactsDialog"; // Importar o novo componente
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all";
 
@@ -80,7 +74,7 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
-  // Removido o estado isAlertDialogOpen, pois o Dialog gerencia o seu próprio estado de abertura/fecho
+  // Removido o estado isAlertDialogOpen, pois o Dialog do shadcn/ui gerencia seu próprio estado de abertura/fechamento
 
   const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
@@ -302,20 +296,7 @@ const Dashboard = () => {
                   Ver Ativos
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" /> Contactos Ativos
-                  </DialogTitle>
-                  <DialogDescription>
-                    Esta é a contagem de contactos que não estão arquivados.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 text-center">
-                  <p className="text-5xl font-bold text-primary">{activeContactsCount}</p>
-                  <p className="text-muted-foreground mt-2">contactos ativos</p>
-                </div>
-              </DialogContent>
+              <ActiveContactsDialog activeCount={activeContactsCount} />
             </Dialog>
           </CardContent>
         </Card>
