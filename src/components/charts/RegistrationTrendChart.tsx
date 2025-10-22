@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react'; // Importar useState e useEffect
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Contact } from '@/types/contact';
@@ -11,20 +11,22 @@ import {
   startOfWeek,
   startOfMonth,
   startOfYear,
-  endOfDay, // Import endOfDay
-  setDate, getDayOfYear, setDayOfYear, getDay, getDate, // Import new date-fns functions
-  isBefore, isSameDay, // Import isSameDay
+  endOfDay,
+  setDate, getDayOfYear, setDayOfYear, getDay, getDate,
+  isBefore, isSameDay,
   addDays,
   addWeeks,
   addMonths,
   addYears,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Toggle } from "@/components/ui/toggle"; // Importar o componente Toggle
+import { cn } from "@/lib/utils"; // Importar cn para styling condicional
 
 interface RegistrationTrendChartProps {
   contacts: Contact[];
   selectedPeriod: "today" | "week" | "month" | "year" | "all";
-  isRealTime: boolean; // Nova prop
+  // isRealTime: boolean; // Removido: isRealTime será gerido internamente
 }
 
 // Helper function to get the real-time cutoff date for a given period's start date
@@ -52,7 +54,14 @@ const getRealTimeCutoffDate = (periodStartDate: Date, selectedPeriod: "week" | "
   }
 };
 
-const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contacts, selectedPeriod, isRealTime }) => {
+const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contacts, selectedPeriod }) => {
+  const [isRealTime, setIsRealTime] = useState(false); // Estado local para Tempo Real
+
+  // Reset isRealTime when selectedPeriod changes
+  useEffect(() => {
+    setIsRealTime(false);
+  }, [selectedPeriod]);
+
   const data = React.useMemo(() => {
     if (!contacts || contacts.length === 0) return [];
 
@@ -179,8 +188,19 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
 
   return (
     <Card className="col-span-full">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"> {/* Ajustado para flex-row */}
         <CardTitle>{getChartTitle()}</CardTitle>
+        {/* Botão "Tempo Real" visível apenas para Semana, Mês e Ano */}
+        {(selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year") && (
+          <Toggle
+            pressed={isRealTime}
+            onPressedChange={setIsRealTime}
+            aria-label="Toggle real-time data"
+            className={cn("ml-4", isRealTime && "bg-green-500 text-white hover:bg-green-600")}
+          >
+            Tempo Real
+          </Toggle>
+        )}
       </CardHeader>
       <CardContent className="h-[350px] p-4">
         {data.length > 0 ? (
