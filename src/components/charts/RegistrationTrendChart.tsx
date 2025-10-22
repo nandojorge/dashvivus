@@ -141,7 +141,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
               }}
             >
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="name" className="text-xs" />
+              <XAxis dataKey="name" className="text-xs" tickCount={10} /> {/* Added tickCount={10} here */}
               <YAxis allowDecimals={false} className="text-xs" />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
