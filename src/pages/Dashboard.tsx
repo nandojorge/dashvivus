@@ -17,6 +17,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
+import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart"; // Import the new chart
 import { cn } from "@/lib/utils";
 // Removidos os imports de Dialog, DialogTrigger, etc., pois o diálogo foi substituído por um novo cartão.
 
@@ -315,6 +316,12 @@ const Dashboard = () => {
       <ContactOriginBarChart
         contacts={filteredContacts}
         previousPeriodFilteredContacts={previousPeriodFilteredContacts}
+      />
+
+      {/* New Registration Trend Chart */}
+      <RegistrationTrendChart
+        contacts={contacts || []} // Pass all contacts for trend calculation
+        selectedPeriod={selectedPeriod}
       />
     </div>
   );
