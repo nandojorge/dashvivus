@@ -40,16 +40,16 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         aggregateBy = startOfDay;
         addUnit = addDays;
         break;
-      case "week": // Separated 'week' logic
+      case "week":
         dateFormat = 'dd/MM'; // Display start of week
         aggregateBy = (date) => startOfWeek(date, { weekStartsOn: 0, locale: ptBR });
         addUnit = addWeeks;
         break;
       case "month":
-        // For 'month', aggregate by week
-        dateFormat = 'dd/MM'; // Display start of week
-        aggregateBy = (date) => startOfWeek(date, { weekStartsOn: 0, locale: ptBR });
-        addUnit = addWeeks;
+        // For 'month', aggregate by month
+        dateFormat = 'MMM/yy'; // Display month and year
+        aggregateBy = startOfMonth;
+        addUnit = addMonths;
         break;
       case "year":
         // For 'year', aggregate by month
@@ -114,10 +114,10 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
     switch (selectedPeriod) {
       case "today":
         return "Registos Diários (Últimos 20 Dias)";
-      case "week": // Corrected title for 'week'
+      case "week":
         return "Registos Semanais (Últimas 20 Semanas)";
-      case "month":
-        return "Registos Semanais (Últimas 20 Semanas)";
+      case "month": // Corrected title for 'month'
+        return "Registos Mensais (Últimos 20 Meses)";
       case "year":
         return "Registos Mensais (Últimos 20 Meses)";
       case "all":
