@@ -15,7 +15,12 @@ const ContactCountyBarChart: React.FC<ContactCountyBarChartProps> = ({ contacts,
     const processContacts = (contactList: Contact[]) => {
       const countyCounts: { [key: string]: number } = {};
       contactList.forEach(contact => {
-        const county = contact.concelho || 'desconhecido'; // Usar 'concelho'
+        const county = contact.concelho ? contact.concelho.toLowerCase() : 'desconhecido'; // Usar 'concelho' e normalizar para minúsculas
+
+        // Excluir "questionar cliente" e "sem informação"
+        if (county === 'questionar cliente' || county === 'sem informação') {
+          return; 
+        }
         countyCounts[county] = (countyCounts[county] || 0) + 1;
       });
       return countyCounts;
