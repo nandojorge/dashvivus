@@ -52,10 +52,10 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         addUnit = addMonths;
         break;
       case "year":
-        // For 'year', aggregate by month
-        dateFormat = 'MMM/yy';
-        aggregateBy = startOfMonth;
-        addUnit = addMonths;
+        // For 'year', aggregate by year
+        dateFormat = 'yyyy';
+        aggregateBy = startOfYear;
+        addUnit = addYears;
         break;
       case "all":
         // For 'all', aggregate by year
@@ -116,10 +116,10 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         return "Registos Diários (Últimos 20 Dias)";
       case "week":
         return "Registos Semanais (Últimas 20 Semanas)";
-      case "month": // Corrected title for 'month'
+      case "month":
         return "Registos Mensais (Últimos 20 Meses)";
-      case "year":
-        return "Registos Mensais (Últimos 20 Meses)";
+      case "year": // Corrected title for 'year'
+        return "Registos Anuais (Últimos 20 Anos)";
       case "all":
         return "Registos Anuais (Últimos 20 Anos)";
       default:
