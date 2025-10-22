@@ -17,9 +17,9 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
-import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart"; // Import the new chart
+import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
 import { cn } from "@/lib/utils";
-// Removidos os imports de Dialog, DialogTrigger, etc., pois o diálogo foi substituído por um novo cartão.
+import { Toggle } from "@/components/ui/toggle"; // Importar o componente Toggle
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all";
 
@@ -74,6 +74,7 @@ const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
+  const [isRealTime, setIsRealTime] = useState(false); // Novo estado para Tempo Real
 
   const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
     queryKey: ["contacts"],
@@ -230,16 +231,16 @@ const Dashboard = () => {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 items-center"> {/* Adicionado items-center para alinhamento */}
         <Button
           variant={selectedPeriod === "today" ? "default" : "outline"}
-          onClick={() => setSelectedPeriod("today")}
+          onClick={() => { setSelectedPeriod("today"); setIsRealTime(false); }} // Desativa Tempo Real para Hoje
         >
           Hoje
         </Button>
         <Button
           variant={selectedPeriod === "week" ? "default" : "outline"}
-          onClick={() => setSelectedPeriod("week")}
+          onClick={() => { setSelectedPeriod("week"); setIsRealTime(false); }} // Desativa Tempo Real para Semana
         >
           Semana
         </Button>
@@ -257,10 +258,22 @@ const Dashboard = () => {
         </Button>
         <Button
           variant={selectedPeriod === "all" ? "default" : "outline"}
-          onClick={() => setSelectedPeriod("all")}
+          onClick={() => { setSelectedPeriod("all"); setIsRealTime(false); }} // Desativa Tempo Real para Todos
         >
           Todos
         </Button>
+
+        {/* Botão "Tempo Real" visível apenas para Mês e Ano */}
+        {(selectedPeriod === "month" || selectedPeriod === "year") && (
+          <Toggle
+            pressed={isRealTime}
+            onPressedChange={setIsRealTime}
+            aria-label="Toggle real-time data"
+            className="ml-4"
+          >
+            Tempo Real
+          </Toggle>
+        )}
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-2">
@@ -320,8 +333,9 @@ const Dashboard = () => {
 
       {/* New Registration Trend Chart */}
       <RegistrationTrendChart
-        contacts={contacts || []} // Pass all contacts for trend calculation
+        contacts={contacts || []}
         selectedPeriod={selectedPeriod}
+        isRealTime={isRealTime} // Passar a nova prop
       />
     </div>
   );

@@ -16,15 +16,18 @@ import {
   addWeeks,
   addMonths,
   addYears,
+  isSameMonth, // Importar isSameMonth
+  isSameYear,  // Importar isSameYear
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface RegistrationTrendChartProps {
   contacts: Contact[];
   selectedPeriod: "today" | "week" | "month" | "year" | "all";
+  isRealTime: boolean; // Nova prop
 }
 
-const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contacts, selectedPeriod }) => {
+const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contacts, selectedPeriod, isRealTime }) => {
   const data = React.useMemo(() => {
     if (!contacts || contacts.length === 0) return [];
 
@@ -73,16 +76,34 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
       if (contact.dataregisto) {
         const date = parseISO(contact.dataregisto);
         if (!isNaN(date.getTime())) {
-          const key = format(aggregateBy(date), dateFormat, { locale: ptBR });
-          aggregatedData[key] = (aggregatedData[key] || 0) + 1;
+          let shouldInclude = true;
+
+          // Aplicar filtro de tempo real para o período atual
+          if (isRealTime) {
+            if (selectedPeriod === "month") {
+              // Se for o mês atual e a data for posterior a 'now', exclui
+              if (isSameMonth(date, now) && !isBefore(date, now)) {
+                shouldInclude = false;
+              }
+            } else if (selectedPeriod === "year") {
+              // Se for o ano atual e a data for posterior a 'now', exclui
+              if (isSameYear(date, now) && !isBefore(date, now)) {
+                shouldInclude = false;
+              }
+            }
+          }
+
+          if (shouldInclude) {
+            const key = format(aggregateBy(date), dateFormat, { locale: ptBR });
+            aggregatedData[key] = (aggregatedData[key] || 0) + 1;
+          }
         }
       }
     });
 
     // Generate a series of dates for the last 20 periods
     const chartData: { name: string; registrations: number }[] = [];
-    let currentDate = aggregateBy(now);
-
+    
     // Find the earliest contact date to ensure we don't go too far back
     const earliestContactDate = contacts.reduce((minDate, contact) => {
       if (contact.dataregisto) {
@@ -108,23 +129,31 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
     }
 
     return chartData;
-  }, [contacts, selectedPeriod]);
+  }, [contacts, selectedPeriod, isRealTime]); // Adicionar isRealTime como dependência
 
   const getChartTitle = () => {
+    let title = "Evolução Temporal dos Registos";
     switch (selectedPeriod) {
       case "today":
-        return "Registos Diários (Últimos 20 Dias)";
+        title = "Registos Diários (Últimos 20 Dias)";
+        break;
       case "week":
-        return "Registos Semanais (Últimas 20 Semanas)";
+        title = "Registos Semanais (Últimas 20 Semanas)";
+        break;
       case "month":
-        return "Registos Mensais (Últimos 20 Meses)";
-      case "year": // Corrected title for 'year'
-        return "Registos Anuais (Últimos 20 Anos)";
+        title = "Registos Mensais (Últimos 20 Meses)";
+        break;
+      case "year":
+        title = "Registos Anuais (Últimos 20 Anos)";
+        break;
       case "all":
-        return "Registos Anuais (Últimos 20 Anos)";
-      default:
-        return "Evolução Temporal dos Registos";
+        title = "Registos Anuais (Últimos 20 Anos)";
+        break;
     }
+    if (isRealTime && (selectedPeriod === "month" || selectedPeriod === "year")) {
+      title += " (Tempo Real)";
+    }
+    return title;
   };
 
   return (
