@@ -8,4 +8,5 @@ export interface Contact {
   dataregisto: string; // Data no formato string
   arquivado: string; // "sim" ou "nao"
   origemcontacto?: string; // Novo campo para a origem do contacto
+  concelho?: string; // Novo campo para o concelho do contacto
 }

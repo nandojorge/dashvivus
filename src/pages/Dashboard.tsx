@@ -18,6 +18,7 @@ import {
 import { ptBR } from "date-fns/locale";
 import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
 import RegistrationTrendChart from "@/components/charts/RegistrationTrendChart";
+import ContactCountyBarChart from "@/components/charts/ContactCountyBarChart"; // Importar o novo gráfico
 import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/toggle"; // Importar o componente Toggle
 
@@ -83,6 +84,9 @@ const Dashboard = () => {
 
   // Define origins in lowercase for consistency
   const origins = ["website", "referral", "social media", "email marketing", "direct"];
+  // Define some example counties for demonstration if 'concelho' is missing
+  const exampleCounties = ["Lisboa", "Porto", "Coimbra", "Faro", "Braga", "Aveiro"];
+
 
   const processContactsForPeriod = (allContacts: Contact[] | undefined, periodFilterFn: (contactDate: Date) => boolean) => {
     if (!allContacts) return [];
@@ -107,9 +111,15 @@ const Dashboard = () => {
         assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
       }
 
+      let assignedCounty = contact.concelho ? contact.concelho : '';
+      if (!assignedCounty) {
+        assignedCounty = exampleCounties[Math.floor(Math.random() * exampleCounties.length)];
+      }
+
       return {
         ...contact,
         origemcontacto: assignedOrigin,
+        concelho: assignedCounty, // Atribuir concelho
       };
     });
   };
@@ -327,6 +337,12 @@ const Dashboard = () => {
 
       {/* Contact Origin Bar Chart */}
       <ContactOriginBarChart
+        contacts={filteredContacts}
+        previousPeriodFilteredContacts={previousPeriodFilteredContacts}
+      />
+
+      {/* Contact County Bar Chart */}
+      <ContactCountyBarChart
         contacts={filteredContacts}
         previousPeriodFilteredContacts={previousPeriodFilteredContacts}
       />
