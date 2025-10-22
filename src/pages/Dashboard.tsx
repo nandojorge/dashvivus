@@ -1,28 +1,81 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getContacts } from '@/api/contacts';
-import { Contact } from '@/types/contact';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { CalendarDays, Users } from 'lucide-react';
-import { format, parseISO, isSameDay, isSameWeek, isSameMonth, isSameYear, subDays, subWeeks, subMonths, subYears } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import ContactOriginBarChart from '@/components/charts/ContactOriginBarChart';
-import { ActiveContactsDialog } from '@/components/ActiveContactsDialog';
-import ContactListByPeriod from '@/components/ContactListByPeriod';
-import { Separator } from '@/components/ui/separator';
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getContacts } from "@/api/contacts";
+import { Contact } from "@/types/contact";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal, Users, TrendingUp, TrendingDown } from "lucide-react";
+import {
+  isToday, isThisWeek, isThisMonth, isThisYear, parseISO,
+  subDays, subWeeks, subMonths, subYears,
+  startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear,
+  isWithinInterval
+} from "date-fns";
+import { ptBR } from "date-fns/locale";
+import ContactOriginBarChart from "@/components/charts/ContactOriginBarChart";
+import { cn } from "@/lib/utils";
+// Removidos os imports de Dialog, DialogTrigger, etc., pois o diálogo foi substituído por um novo cartão.
 
 type FilterPeriod = "today" | "week" | "month" | "year" | "all";
 
-const Dashboard = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("month");
-  const [dialogOpen, setDialogOpen] = useState(false);
+// Helper function to get previous period interval
+const getPreviousPeriodInterval = (currentPeriod: FilterPeriod, now: Date) => {
+  let start: Date;
+  let end: Date;
 
-  const { data: contacts, isLoading, isError, error } = useQuery<Contact[]>({
-    queryKey: ['contacts'],
+  switch (currentPeriod) {
+    case "today":
+      start = startOfDay(subDays(now, 1));
+      end = endOfDay(subDays(now, 1));
+      break;
+    case "week":
+      start = startOfWeek(subWeeks(now, 1), { weekStartsOn: 0, locale: ptBR });
+      end = endOfWeek(subWeeks(now, 1), { weekStartsOn: 0, locale: ptBR });
+      break;
+    case "month":
+      start = startOfMonth(subMonths(now, 1));
+      end = endOfMonth(subMonths(now, 1));
+      break;
+    case "year":
+      start = startOfYear(subYears(now, 1));
+      end = endOfYear(subYears(now, 1));
+      break;
+    case "all":
+      return { start: new Date(0), end: now };
+    default:
+      return { start: now, end: now };
+  }
+  return { start, end };
+};
+
+// Helper function to filter items (contacts) by period
+const getPeriodFilter = (itemDate: Date, period: FilterPeriod) => {
+  const now = new Date();
+  switch (period) {
+    case "today":
+      return isToday(itemDate);
+    case "week":
+      return isThisWeek(itemDate, { weekStartsOn: 0, locale: ptBR });
+    case "month":
+      return isThisMonth(itemDate);
+    case "year":
+      return isThisYear(itemDate);
+    case "all":
+      return true;
+    default:
+      return false;
+  }
+};
+
+const Dashboard = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState<FilterPeriod>("today");
+
+  const { data: contacts, isLoading, isError, error } = useQuery<Contact[], Error>({
+    queryKey: ["contacts"],
     queryFn: getContacts,
   });
 
@@ -48,8 +101,8 @@ const Dashboard = () => {
       return periodFilterFn(itemDate);
     }).map((contact) => {
       let assignedOrigin = contact.origemcontacto ? contact.origemcontacto.toLowerCase() : '';
-      if (!assignedOrigin || !origins.includes(assignedOrigin)) { // Ensure assigned origin is one of the defined ones
-        assignedOrigin = origins[Math.floor(Math.random() * origins.length)]; // <-- AQUI É ONDE A ORIGEM É ATRIBUÍDA ALEATORIAMENTE
+      if (!assignedOrigin) {
+        assignedOrigin = origins[Math.floor(Math.random() * origins.length)];
       }
 
       return {
@@ -59,160 +112,210 @@ const Dashboard = () => {
     });
   };
 
-  const currentPeriodContacts = useMemo(() => {
-    const now = new Date();
-    let filterFn: (contactDate: Date) => boolean;
-
-    switch (selectedPeriod) {
-      case "today":
-        filterFn = (date) => isSameDay(date, now);
-        break;
-      case "week":
-        filterFn = (date) => isSameWeek(date, now, { weekStartsOn: 0, locale: ptBR });
-        break;
-      case "month":
-        filterFn = (date) => isSameMonth(date, now);
-        break;
-      case "year":
-        filterFn = (date) => isSameYear(date, now);
-        break;
-      case "all":
-      default:
-        filterFn = () => true; // No date filter for "all"
-        break;
-    }
-    return processContactsForPeriod(contacts, filterFn);
+  const filteredContacts = useMemo(() => {
+    return processContactsForPeriod(contacts, (contactDate) => getPeriodFilter(contactDate, selectedPeriod));
   }, [contacts, selectedPeriod]);
 
+  // Calculate previous period contacts
   const previousPeriodFilteredContacts = useMemo(() => {
+    if (!contacts || selectedPeriod === "all") return [];
     const now = new Date();
-    let previousPeriodStart: Date;
-    let filterFn: (contactDate: Date) => boolean;
-
-    switch (selectedPeriod) {
-      case "today":
-        previousPeriodStart = subDays(now, 1);
-        filterFn = (date) => isSameDay(date, previousPeriodStart);
-        break;
-      case "week":
-        previousPeriodStart = subWeeks(now, 1);
-        filterFn = (date) => isSameWeek(date, previousPeriodStart, { weekStartsOn: 0, locale: ptBR });
-        break;
-      case "month":
-        previousPeriodStart = subMonths(now, 1);
-        filterFn = (date) => isSameMonth(date, previousPeriodStart);
-        break;
-      case "year":
-        previousPeriodStart = subYears(now, 1);
-        filterFn = (date) => isSameYear(date, previousPeriodStart);
-        break;
-      case "all":
-      default:
-        return []; // No previous period comparison for "all"
-    }
-    return processContactsForPeriod(contacts, filterFn);
+    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
+    return processContactsForPeriod(contacts, (contactDate) => isWithinInterval(contactDate, { start, end }));
   }, [contacts, selectedPeriod]);
+
+  const filteredContactsCount = useMemo(() => {
+    return filteredContacts.length;
+  }, [filteredContacts]);
 
   const activeContactsCount = useMemo(() => {
-    return contacts?.filter(contact => contact.arquivado === "nao").length || 0;
-  }, [contacts]);
+    return filteredContacts.filter(contact => contact.arquivado === "nao").length;
+  }, [filteredContacts]);
+
+  const previousPeriodContactsCount = useMemo(() => {
+    if (!contacts || selectedPeriod === "all") return 0;
+    const now = new Date();
+    const { start, end } = getPreviousPeriodInterval(selectedPeriod, now);
+    return contacts.filter((contact) => {
+      if (!contact.dataregisto || typeof contact.dataregisto !== 'string') return false;
+      const contactDate = parseISO(contact.dataregisto);
+      return !isNaN(contactDate.getTime()) && isWithinInterval(contactDate, { start: start, end: end });
+    }).length;
+  }, [contacts, selectedPeriod]);
+
+  const getPeriodLabel = (period: FilterPeriod) => {
+    switch (period) {
+      case "today":
+        return "Hoje";
+      case "week":
+        return "Esta Semana";
+      case "month":
+        return "Este Mês";
+      case "year":
+        return "Este Ano";
+      case "all":
+        return "Todos";
+      default:
+        return "";
+    }
+  };
+
+  const getPreviousPeriodLabel = (period: FilterPeriod) => {
+    switch (period) {
+      case "today":
+        return "Ontem";
+      case "week":
+        return "Semana Anterior";
+      case "month":
+        return "Mês Anterior";
+      case "year":
+        return "Ano Anterior";
+      case "all":
+        return "N/A";
+      default:
+        return "";
+    }
+  };
+
+  const getTrendIcon = (currentValue: number, previousValue: number) => {
+    if (currentValue > previousValue) {
+      return <TrendingUp className="h-4 w-4 text-green-500 ml-1" />;
+    } else if (currentValue < previousValue) {
+      return <TrendingDown className="h-4 w-4 text-red-500 ml-1" />;
+    }
+    return null;
+  };
+
+  const getTrendTextColor = (currentValue: number, previousValue: number) => {
+    if (currentValue > previousValue) {
+      return "text-green-500";
+    } else if (currentValue < previousValue) {
+      return "text-red-500";
+    }
+    return "text-muted-foreground";
+  };
 
   if (isLoading) {
-    return <div className="p-4 text-center">A carregar contactos...</div>;
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Carregando Dados...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[100px] w-full rounded-md" />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (isError) {
-    return <div className="p-4 text-center text-red-500">Erro ao carregar contactos: {error?.message}</div>;
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
+        <Alert variant="destructive">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>Erro</AlertTitle>
+          <AlertDescription>
+            Ocorreu um erro ao carregar os dados: {error?.message || "Erro desconhecido."}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <Button
-            variant={selectedPeriod === "today" ? "secondary" : "ghost"}
-            onClick={() => setSelectedPeriod("today")}
-          >
-            Hoje
-          </Button>
-          <Button
-            variant={selectedPeriod === "week" ? "secondary" : "ghost"}
-            onClick={() => setSelectedPeriod("week")}
-          >
-            Semana
-          </Button>
-          <Button
-            variant={selectedPeriod === "month" ? "secondary" : "ghost"}
-            onClick={() => setSelectedPeriod("month")}
-          >
-            Mês
-          </Button>
-          <Button
-            variant={selectedPeriod === "year" ? "secondary" : "ghost"}
-            onClick={() => setSelectedPeriod("year")}
-          >
-            Ano
-          </Button>
-          <Button
-            variant={selectedPeriod === "all" ? "secondary" : "ghost"}
-            onClick={() => setSelectedPeriod("all")}
-          >
-            Todos
-          </Button>
-        </div>
+    <div className="flex flex-col gap-4">
+      <h1 className="text-3xl font-bold">Dashboard Vivusfisio</h1>
+      <div className="flex gap-2 mb-4">
+        <Button
+          variant={selectedPeriod === "today" ? "default" : "outline"}
+          onClick={() => setSelectedPeriod("today")}
+        >
+          Hoje
+        </Button>
+        <Button
+          variant={selectedPeriod === "week" ? "default" : "outline"}
+          onClick={() => setSelectedPeriod("week")}
+        >
+          Semana
+        </Button>
+        <Button
+          variant={selectedPeriod === "month" ? "default" : "outline"}
+          onClick={() => setSelectedPeriod("month")}
+        >
+          Mês
+        </Button>
+        <Button
+          variant={selectedPeriod === "year" ? "default" : "outline"}
+          onClick={() => setSelectedPeriod("year")}
+        >
+          Ano
+        </Button>
+        <Button
+          variant={selectedPeriod === "all" ? "default" : "outline"}
+          onClick={() => setSelectedPeriod("all")}
+        >
+          Todos
+        </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      <div className="flex gap-4 overflow-x-auto pb-2">
+        {/* Cartão de Contactos */}
+        <Card className="min-w-[280px] flex-shrink-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Contactos no Período
+              Total de Contactos
             </CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <div className="rounded-full bg-primary/10 p-2 flex items-center justify-center">
+              <Users className="h-4 w-4 text-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currentPeriodContacts.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {selectedPeriod === "all"
-                ? "Total de contactos registados"
-                : `Contactos registados ${selectedPeriod === "today" ? "hoje" : selectedPeriod === "week" ? "esta semana" : selectedPeriod === "month" ? "este mês" : "este ano"}`}
-            </p>
+            <div className="text-2xl font-bold">{filteredContactsCount}</div>
+            {selectedPeriod !== "all" && (
+              <p className="text-xs flex items-center">
+                <span className="text-foreground">{getPreviousPeriodLabel(selectedPeriod)}:</span>
+                <span className={cn("ml-1", getTrendTextColor(filteredContactsCount, previousPeriodContactsCount))}>
+                  {previousPeriodContactsCount}
+                </span>
+                {getTrendIcon(filteredContactsCount, previousPeriodContactsCount)}
+              </p>
+            )}
+            {selectedPeriod === "all" && (
+              <p className="text-xs text-muted-foreground">
+                {getPreviousPeriodLabel(selectedPeriod)}
+              </p>
+            )}
           </CardContent>
         </Card>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Contactos Ativos
-                </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{activeContactsCount}</div>
-                <p className="text-xs text-muted-foreground">
-                  Contactos não arquivados
-                </p>
-              </CardContent>
-            </Card>
-          </DialogTrigger>
-          <ActiveContactsDialog activeCount={activeContactsCount} />
-        </Dialog>
+        {/* Novo Cartão de Contactos Ativos */}
+        <Card className="min-w-[280px] flex-shrink-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Contactos Ativos
+            </CardTitle>
+            <div className="rounded-full bg-green-500/10 p-2 flex items-center justify-center">
+              <Users className="h-4 w-4 text-green-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeContactsCount}</div>
+            <p className="text-xs text-muted-foreground">
+              Contactos não arquivados
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <ContactOriginBarChart
-          contacts={currentPeriodContacts}
-          previousPeriodFilteredContacts={previousPeriodFilteredContacts}
-        />
-      </div>
-
-      <Separator className="my-4" />
-
-      <h2 className="text-2xl font-bold mb-4">Detalhes dos Contactos</h2>
-      <ContactListByPeriod contacts={currentPeriodContacts} selectedPeriod={selectedPeriod} />
+      {/* Contact Origin Bar Chart */}
+      <ContactOriginBarChart
+        contacts={filteredContacts}
+        previousPeriodFilteredContacts={previousPeriodFilteredContacts}
+      />
     </div>
   );
 };
