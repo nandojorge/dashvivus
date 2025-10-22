@@ -11,13 +11,13 @@ import {
   startOfWeek,
   startOfMonth,
   startOfYear,
-  isBefore,
+  endOfDay, // Import endOfDay
+  setDate, getDayOfYear, setDayOfYear, getDay, getDate, // Import new date-fns functions
+  isBefore, isSameDay, // Import isSameDay
   addDays,
   addWeeks,
   addMonths,
   addYears,
-  isSameMonth, // Importar isSameMonth
-  isSameYear,  // Importar isSameYear
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -26,6 +26,31 @@ interface RegistrationTrendChartProps {
   selectedPeriod: "today" | "week" | "month" | "year" | "all";
   isRealTime: boolean; // Nova prop
 }
+
+// Helper function to get the real-time cutoff date for a given period's start date
+const getRealTimeCutoffDate = (periodStartDate: Date, selectedPeriod: "week" | "month" | "year", now: Date): Date => {
+  let cutoffDate = periodStartDate;
+
+  switch (selectedPeriod) {
+    case "week":
+      // Cutoff is the same day of the week as 'now' within the 'periodStartDate' week
+      const currentDayOfWeek = getDay(now); // 0 (Sun) - 6 (Sat)
+      cutoffDate = addDays(startOfWeek(periodStartDate, { weekStartsOn: 0, locale: ptBR }), currentDayOfWeek);
+      return endOfDay(cutoffDate); // Include the entire cutoff day
+    case "month":
+      // Cutoff is the same day of the month as 'now' within the 'periodStartDate' month
+      const currentDayOfMonth = getDate(now);
+      cutoffDate = setDate(startOfMonth(periodStartDate), currentDayOfMonth);
+      return endOfDay(cutoffDate);
+    case "year":
+      // Cutoff is the same day of the year as 'now' within the 'periodStartDate' year
+      const currentDayOfYear = getDayOfYear(now);
+      cutoffDate = setDayOfYear(startOfYear(periodStartDate), currentDayOfYear);
+      return endOfDay(cutoffDate);
+    default:
+      return now; // Should not be reached for these periods
+  }
+};
 
 const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contacts, selectedPeriod, isRealTime }) => {
   const data = React.useMemo(() => {
@@ -78,18 +103,14 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         if (!isNaN(date.getTime())) {
           let shouldInclude = true;
 
-          // Aplicar filtro de tempo real para o período atual
-          if (isRealTime) {
-            if (selectedPeriod === "month") {
-              // Se for o mês atual e a data for posterior a 'now', exclui
-              if (isSameMonth(date, now) && !isBefore(date, now)) {
-                shouldInclude = false;
-              }
-            } else if (selectedPeriod === "year") {
-              // Se for o ano atual e a data for posterior a 'now', exclui
-              if (isSameYear(date, now) && !isBefore(date, now)) {
-                shouldInclude = false;
-              }
+          if (isRealTime && (selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year")) {
+            const cutoffDateForThisContactPeriod = getRealTimeCutoffDate(date, selectedPeriod, now);
+
+            // Only include if the contact date is before or on the cutoff date for its period
+            if (isBefore(date, cutoffDateForThisContactPeriod) || isSameDay(date, cutoffDateForThisContactPeriod)) {
+                // This contact is before or on the cutoff, so it's included
+            } else {
+                shouldInclude = false; // This contact is after the cutoff for its period
             }
           }
 
@@ -150,7 +171,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
         title = "Registos Anuais (Últimos 20 Anos)";
         break;
     }
-    if (isRealTime && (selectedPeriod === "month" || selectedPeriod === "year")) {
+    if (isRealTime && (selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year")) {
       title += " (Tempo Real)";
     }
     return title;

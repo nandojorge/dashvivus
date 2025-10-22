@@ -246,13 +246,13 @@ const Dashboard = () => {
         </Button>
         <Button
           variant={selectedPeriod === "month" ? "default" : "outline"}
-          onClick={() => setSelectedPeriod("month")}
+          onClick={() => { setSelectedPeriod("month"); setIsRealTime(false); }} // Desativa Tempo Real para Mês
         >
           Mês
         </Button>
         <Button
           variant={selectedPeriod === "year" ? "default" : "outline"}
-          onClick={() => setSelectedPeriod("year")}
+          onClick={() => { setSelectedPeriod("year"); setIsRealTime(false); }} // Desativa Tempo Real para Ano
         >
           Ano
         </Button>
@@ -263,13 +263,13 @@ const Dashboard = () => {
           Todos
         </Button>
 
-        {/* Botão "Tempo Real" visível apenas para Mês e Ano */}
-        {(selectedPeriod === "month" || selectedPeriod === "year") && (
+        {/* Botão "Tempo Real" visível apenas para Semana, Mês e Ano */}
+        {(selectedPeriod === "week" || selectedPeriod === "month" || selectedPeriod === "year") && (
           <Toggle
             pressed={isRealTime}
             onPressedChange={setIsRealTime}
             aria-label="Toggle real-time data"
-            className="ml-4"
+            className={cn("ml-4", isRealTime && "bg-green-500 text-white hover:bg-green-600")}
           >
             Tempo Real
           </Toggle>
