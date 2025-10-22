@@ -36,11 +36,14 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
 
     switch (selectedPeriod) {
       case "today":
-      case "week":
-        // For 'today' and 'week', aggregate by day
         dateFormat = 'dd/MM';
         aggregateBy = startOfDay;
         addUnit = addDays;
+        break;
+      case "week": // Separated 'week' logic
+        dateFormat = 'dd/MM'; // Display start of week
+        aggregateBy = (date) => startOfWeek(date, { weekStartsOn: 0, locale: ptBR });
+        addUnit = addWeeks;
         break;
       case "month":
         // For 'month', aggregate by week
@@ -110,8 +113,9 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
   const getChartTitle = () => {
     switch (selectedPeriod) {
       case "today":
-      case "week":
         return "Registos Diários (Últimos 20 Dias)";
+      case "week": // Corrected title for 'week'
+        return "Registos Semanais (Últimas 20 Semanas)";
       case "month":
         return "Registos Semanais (Últimas 20 Semanas)";
       case "year":
@@ -141,7 +145,7 @@ const RegistrationTrendChart: React.FC<RegistrationTrendChartProps> = ({ contact
               }}
             >
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="name" className="text-xs" interval={2} /> {/* Changed tickCount to interval={2} */}
+              <XAxis dataKey="name" className="text-xs" interval={2} />
               <YAxis allowDecimals={false} className="text-xs" />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))' }}
