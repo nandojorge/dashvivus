@@ -341,17 +341,17 @@ const Dashboard = () => {
         previousPeriodFilteredContacts={previousPeriodFilteredContacts}
       />
 
-      {/* Contact County Bar Chart */}
-      <ContactCountyBarChart
-        contacts={filteredContacts}
-        previousPeriodFilteredContacts={previousPeriodFilteredContacts}
-      />
-
       {/* New Registration Trend Chart */}
       <RegistrationTrendChart
         contacts={contacts || []}
         selectedPeriod={selectedPeriod}
         isRealTime={isRealTime} // Passar a nova prop
+      />
+      
+      {/* Contact County Bar Chart */}
+      <ContactCountyBarChart
+        contacts={filteredContacts}
+        previousPeriodFilteredContacts={previousPeriodFilteredContacts}
       />
     </div>
   );
