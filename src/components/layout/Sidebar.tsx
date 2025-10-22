@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "react-router-dom";
-import { Users, Stethoscope, Menu, UserPlus } from "lucide-react"; // Changed Home to Users, added UserPlus
+import { Users, Menu, UserPlus } from "lucide-react"; // Removed Stethoscope
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -64,8 +64,9 @@ export const Sidebar = () => {
           <div className="flex h-full max-h-screen flex-col gap-2">
             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
               <Link to="/" className="flex items-center gap-2 font-semibold">
-                <Stethoscope className="h-6 w-6" />
-                <span className="">FisioCRM</span>
+                {/* <Stethoscope className="h-6 w-6" /> */}
+                <span className="text-lg font-bold text-primary">Vivusfisio</span> {/* Placeholder text logo */}
+                <span className="sr-only">Vivusfisio</span>
               </Link>
             </div>
             <ScrollArea className="flex-1">
@@ -84,8 +85,9 @@ export const Sidebar = () => {
           to="/"
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
-          <Stethoscope className="h-4 w-4 transition-all group-hover:scale-110" />
-          <span className="sr-only">FisioCRM</span>
+          {/* <Stethoscope className="h-4 w-4 transition-all group-hover:scale-110" /> */}
+          <span className="text-sm font-bold text-primary-foreground">VF</span> {/* Abbreviation for small icon */}
+          <span className="sr-only">Vivusfisio</span>
         </Link>
         <Separator />
         {renderNavLinks(false)}
