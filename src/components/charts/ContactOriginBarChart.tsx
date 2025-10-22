@@ -29,7 +29,7 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
       ...Object.keys(prevOriginCounts),
     ]);
 
-    return Array.from(allOrigins).map(origin => {
+    const chartData = Array.from(allOrigins).map(origin => {
       const currentTotal = currentOriginCounts[origin] || 0;
       const previousTotal = prevOriginCounts[origin] || 0;
 
@@ -39,6 +39,22 @@ const ContactOriginBarChart: React.FC<ContactOriginBarChartProps> = ({ contacts,
         previousValue: previousTotal,
       };
     });
+
+    // Sort the data:
+    // 1. By currentValue in descending order
+    // 2. Then by previousValue in descending order
+    // 3. Then by name alphabetically
+    chartData.sort((a, b) => {
+      if (b.currentValue !== a.currentValue) {
+        return b.currentValue - a.currentValue;
+      }
+      if (b.previousValue !== a.previousValue) {
+        return b.previousValue - a.previousValue;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    return chartData;
   }, [contacts, previousPeriodFilteredContacts]);
 
   // Helper function to capitalize the first letter of a string
